@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <a href=""><img src="https://github.com/ynskaydan/GoktasAGV/blob/master/logos/logo1.png" alt="logo" width="150"></a>
+  <a href=""><img src="https://github.com/ynskaydan/GoktasAGV/blob/main/logo.jpg" alt="logo" width="300"></a>
   <br>
 Goktas AGV
   <br>
