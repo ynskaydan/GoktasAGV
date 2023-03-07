@@ -1,8 +1,5 @@
-from tokenize import String
+
 import cv2
-from paho.mqtt import client as mqtt_client
-import random
-import time
 import datetime
 from mqtt import connect_mqtt, sendData
 
