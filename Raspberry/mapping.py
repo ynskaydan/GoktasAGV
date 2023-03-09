@@ -1,7 +1,7 @@
 import json
+from CrossCuttingConcerns.mqtt import connect_mqtt, send_data, broker
+from CrossCuttingConcerns.sub_mqtt import mqtt_sub
 from Graph import Graph
-from mqtt import broker, connect_mqtt, send_data
-from sub_mqtt import mqtt_sub
 
 
 pub_topic = "mapping"
@@ -25,9 +25,9 @@ def callback(client, userdata, msg):
     posx = float(parts[1])
     posy = float(parts[2])
     weight = 0
-    if (posy == old_posy):
+    if posy == old_posy:
         weight = posx - old_posx
-    if (posx == old_posx):
+    if posx == old_posx:
         weight = posy - old_posy
 
     g.add_edge(old_value, old_posx, old_posy, value, posx, posy, weight)
@@ -54,8 +54,8 @@ def convert_json(graph):
         nodes.append({"id": node.get_id(), "pos": pos, "adjacents": list_adjacents})
     graphs = {"nodes": nodes}
 
-    convertedJson = json.dumps(graphs)
-    return convertedJson
+    converted_json = json.dumps(graphs)
+    return converted_json
 
 
 mqtt_sub(broker, sub_topic, callback)

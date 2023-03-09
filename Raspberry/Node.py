@@ -1,7 +1,7 @@
 class Node:
     def __init__(self, id, posx, posy):
         self.id = id
-        self.pos = [posx,posy]
+        self.pos = [posx, posy]
         self.adjacents = {}
 
     def get_id(self):
