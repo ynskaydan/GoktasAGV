@@ -1,6 +1,7 @@
-from mqtt import connect_mqtt, sendData
+import time
+from mqtt import connect_mqtt, send_data
 
-topic = "hearbeat"
+heartbeat_topic = "hearbeat"
 client = connect_mqtt()
 def send_heartbeat():
     while True:
