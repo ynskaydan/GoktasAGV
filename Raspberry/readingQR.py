@@ -1,7 +1,7 @@
 
 import cv2
 import datetime
-from mqtt import connect_mqtt, sendData
+from CrossCuttingConcerns.mqtt import connect_mqtt, send_data
 
 topic = "qr"
 

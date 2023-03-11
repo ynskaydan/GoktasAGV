@@ -17,10 +17,12 @@ g = Graph()
 
 def callback(client, userdata, msg):
     global old_value
-    global old_posx
+    global old_posx # bir önceki node değerlerini almak
     global old_posy
-    corner = msg.payload.decode('utf-8')
-    parts = corner.split(";")
+
+    corner = msg.payload.decode('utf-8') # dinlenen veriyi anlamlı hale getirmek
+
+    parts = corner.split(";") # QR etiketinin standart halinde pozisyonu ayrıştırmak
     value = parts[0]
     posx = float(parts[1])
     posy = float(parts[2])
@@ -31,7 +33,8 @@ def callback(client, userdata, msg):
         weight = posy - old_posy
 
     g.add_edge(old_value, old_posx, old_posy, value, posx, posy, weight)
-    send_data(client, convert_json(g), pub_topic)
+
+    send_data(client, convert_json(g), pub_topic) # Node değerlerini mqtt'ye göndermek
     print(convert_json(g))
 
     old_value = value
