@@ -9,7 +9,7 @@ sub_topic = "corners"
 client = connect_mqtt()
 
 
-old_posx = 0
+old_posx = 100
 old_posy = 0
 old_value = "S"
 g = Graph()
