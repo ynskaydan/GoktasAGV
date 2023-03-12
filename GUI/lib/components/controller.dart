@@ -1,5 +1,6 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide BoxDecoration, BoxShadow;
+import 'package:flutter_insert_box_shadow/flutter_insert_box_shadow.dart';
 import 'package:goktasgui/components/controller.dart';
 import 'package:universal_mqtt_client/universal_mqtt_client.dart';
 import 'package:mqtt_client/mqtt_client.dart';
@@ -109,12 +110,21 @@ class _ControllerState extends State<Controller> {
   }
 
   Widget directions({required int direction, required String imagePath}) {
+    Offset distance = const Offset(5, 5);
+    double blur = 24;
     return Container(
       height: 50,
       width: 50,
       decoration: BoxDecoration(
         color: Constant.directionGrey,
         borderRadius: BorderRadius.circular(10),
+        boxShadow: const [
+          BoxShadow(
+              blurRadius: blur,
+              offset: distance,
+              color: Constant.directionGrey),
+          BoxShadow(blurRadius: blur, offset: -distance, color: Colors.black87)
+        ],
       ),
       child: Center(
         child: IconButton(
