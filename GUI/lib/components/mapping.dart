@@ -7,7 +7,7 @@ import 'package:universal_mqtt_client/universal_mqtt_client.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:goktasgui/components/constants.dart';
 
-var mappingState = false;
+var mappingState = true;
 
 class MyCustomPainter extends CustomPainter {
   final List<Offset> points;

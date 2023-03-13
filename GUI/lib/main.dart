@@ -5,11 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:goktasgui/components/controller.dart';
 import 'package:goktasgui/components/mapping.dart';
-import 'package:goktasgui/components/senario.dart';
+
 import 'package:universal_mqtt_client/universal_mqtt_client.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:goktasgui/components/constants.dart';
 import 'package:goktasgui/components/mapping.dart';
+import 'package:goktasgui/components/senario.dart';
 
 var haritaBaslik;
 
@@ -128,8 +129,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                   MediaQuery.of(context).size.height / 6,
                             ),
                             DataComponent(
-                              contentData: DataComponentContent(text: "25 C"),
-                              subTitle: "Sıcaklık",
+                              contentData: Text("s"),
+                              subTitle: "Acil Durdurma Butonu",
                               widthSize: MediaQuery.of(context).size.width / 6,
                               heightSize:
                                   MediaQuery.of(context).size.height / 6,
