@@ -9,6 +9,9 @@ import 'package:goktasgui/components/senario.dart';
 import 'package:universal_mqtt_client/universal_mqtt_client.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:goktasgui/components/constants.dart';
+import 'package:goktasgui/components/mapping.dart';
+
+var haritaBaslik;
 
 void main() async {
   runApp(const MyApp());
@@ -19,6 +22,11 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (mappingState) {
+      haritaBaslik = "Harita Oluşturuluyor...";
+    } else {
+      haritaBaslik = "Harita oluşturuldu";
+    }
     return MaterialApp(
       title: 'Goktas AGV Control Panel',
       theme: ThemeData(
@@ -161,7 +169,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     DataComponent(
-                      subTitle: "Harita",
+                      subTitle: haritaBaslik,
                       contentData: MappingWidget(),
                       widthSize: MediaQuery.of(context).size.width / 3,
                       heightSize: MediaQuery.of(context).size.height / 3 + 20,
