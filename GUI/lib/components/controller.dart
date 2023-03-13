@@ -43,20 +43,12 @@ class _ControllerState extends State<Controller> {
 
   Color _buttonColor = Colors.red;
   bool _isButtonOn = false;
-  final String pubTopic = "goktasagv";
-  int x = 0;
-  int y = 0;
+
   int a = 0;
   int b = 0;
 
   String text = "No Sended Message";
 
-  Map<int, bool> isPressedMap = {
-    0: false,
-    1: false,
-    2: false,
-    3: false,
-  };
   void _moveForward() {
     if (_isButtonOn) {
       setState(() {
@@ -194,8 +186,7 @@ class _ControllerState extends State<Controller> {
 
   Widget controllerButton() {
     return Container(
-      height: 70,
-      width: 70,
+      width: MediaQuery.of(context).size.width / 20,
       child: NeumorphicButton(
         onPressed: () {
           setState(() {

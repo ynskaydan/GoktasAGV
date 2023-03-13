@@ -12,6 +12,8 @@ import 'package:goktasgui/components/constants.dart';
 import 'package:goktasgui/components/mapping.dart';
 import 'package:goktasgui/components/senario.dart';
 
+import 'components/emergency.dart';
+
 var haritaBaslik;
 
 void main() async {
@@ -122,16 +124,10 @@ class _MyHomePageState extends State<MyHomePage> {
                           // ignore: prefer_const_literals_to_create_immutables
                           children: [
                             DataComponent(
-                              contentData: DataComponentContent(text: "55 Kg"),
-                              subTitle: "Yük Bilgileri",
-                              widthSize: MediaQuery.of(context).size.width / 6,
-                              heightSize:
-                                  MediaQuery.of(context).size.height / 6,
-                            ),
-                            DataComponent(
-                              contentData: Text("s"),
+                              contentData: EmergencyStop(),
                               subTitle: "Acil Durdurma Butonu",
-                              widthSize: MediaQuery.of(context).size.width / 6,
+                              widthSize:
+                                  MediaQuery.of(context).size.width / 3 + 20,
                               heightSize:
                                   MediaQuery.of(context).size.height / 6,
                             ),
