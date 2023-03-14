@@ -1,12 +1,8 @@
-
 import cv2
 import datetime
 from CrossCuttingConcerns.mqtt import connect_mqtt, send_data
 
 topic = "qr"
-
-
-
 
 time_old = datetime.datetime.now();
 
@@ -18,11 +14,11 @@ def publish(client, message, oldmessage):
               str(datetime.datetime.now().minute) + ":" + \
               str(datetime.datetime.now().second)
     if (oldmessage != message):
-        sendData(client, resultx)
+        send_data(client, resultx)
         time_old = time_now
     else:
         if ((time_now.second - time_old.second) % 60 >= 10):
-            sendData(client, resultx)
+            send_data(client, resultx)
             time_old = time_now
 
 
@@ -53,7 +49,7 @@ while True:
             olddata = data;
 
     # display the image preview
-    #cv2.imshow("code detector", img)
+    # cv2.imshow("code detector", img)
     if (cv2.waitKey(1) == ord("q")):
         break
 # free camera object and exit

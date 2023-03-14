@@ -3,6 +3,7 @@ class Node:
         self.id = id
         self.pos = [posx, posy]
         self.adjacents = {}
+        self.unvisited_directions = {}
 
     def get_id(self):
         return self.id
@@ -12,7 +13,8 @@ class Node:
 
     def get_connections(self):
         return self.adjacents.keys()
-
+    def get_unvisited_directions(self):
+        return self.unvisited_directions.keys()
     def get_weight(self, adjacent_id):
         return self.adjacents[adjacent_id]
 
