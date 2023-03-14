@@ -17,7 +17,7 @@ class Node:
         return self.adjacents[adjacent_id]
 
     def get_pos_x(self):
-        return int(self.pos[0])
+        return self.pos[0]
 
     def get_pos_y(self):
-        return int(self.pos[1])
+        return self.pos[1]

@@ -2,44 +2,67 @@ import json
 from CrossCuttingConcerns.mqtt import connect_mqtt, send_data, broker
 from CrossCuttingConcerns.sub_mqtt import mqtt_sub
 from Graph import Graph
-
+from Raspberry.qr import QR
 
 pub_topic = "mapping"
-sub_topic = "corners"
+sub_topic = "qr"
 client = connect_mqtt()
 
-
-old_posx = 100
+list_qr = []
+old_posx = 0
 old_posy = 0
 old_value = "S"
 g = Graph()
+nodes = []
+old_node = g.add_node(old_value, old_posx, old_posy)
+nodes.append(old_node)
 
 
 def callback(client, userdata, msg):
-    global old_value
-    global old_posx # bir önceki node değerlerini almak
-    global old_posy
+    global old_node  # bir önceki node değerlerini almak
 
-    corner = msg.payload.decode('utf-8') # dinlenen veriyi anlamlı hale getirmek
+    message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
 
-    parts = corner.split(";") # QR etiketinin standart halinde pozisyonu ayrıştırmak
-    value = parts[0]
-    posx = float(parts[1])
-    posy = float(parts[2])
-    weight = 0
-    if posy == old_posy:
-        weight = posx - old_posx
-    if posx == old_posx:
-        weight = posy - old_posy
+    parts = message.split(";")  # QR etiketinin standart halinde pozisyonu ayrıştırmak
+    qr = QR(parts[0], parts[1], parts[2])
+    list_qr.append(qr)
+    lenght = len(list_qr)
 
-    g.add_edge(old_value, old_posx, old_posy, value, posx, posy, weight)
+    if lenght >= 2:
+        last = list_qr[lenght - 1]
+        past = list_qr[lenght - 2]
+        last_value = last.get_id()
+        last_posx = last.get_pos_x()
+        last_posy = last.get_pos_y()
 
-    send_data(client, convert_json(g), pub_topic) # Node değerlerini mqtt'ye göndermek
+        past_value = past.get_id()
+        past_posx = past.get_pos_x()
+        past_posy = past.get_pos_y()
+
+        if last_posx == past_posx or last_posy == past_posy:
+            if last_posy == past_posy:
+                posx = int((last_posx + past_posx) / 2)
+                posy = last_posy
+                print("as")
+            if last_posx == past_posx:
+                posy = int((last_posy + past_posy) / 2)
+                posx = last_posx
+                print("za")
+
+        else:
+            posx = last_posx
+            posy = past_posy
+            print("sa")
+
+
+        new_node = g.add_node(g.num_of_nodes, posx, posy)
+        past_node = nodes[len(nodes) - 1]
+        nodes.append(new_node)
+        # weight = int(new_node.get_pos_x() - past_node.get_pos_x()) + int(new_node.get_pos_y() - past_node.get_pos_y())
+        g.add_edge(past_node, new_node, 20)
+
+    send_data(client, convert_json(g), pub_topic)  # Node değerlerini mqtt'ye göndermek
     print(convert_json(g))
-
-    old_value = value
-    old_posx = posx
-    old_posy = posy
 
 
 def convert_json(graph):
