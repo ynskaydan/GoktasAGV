@@ -2,12 +2,14 @@ import json
 from CrossCuttingConcerns.mqtt import connect_mqtt, send_data, broker
 from CrossCuttingConcerns.sub_mqtt import mqtt_sub
 from Graph import Graph
+import paho.mqtt.client as mqtt
 from qr import QR
 from Raspberry.qr import QR
 
 g = Graph()
 pub_topic = "mapping"
-sub_topic = "corner"
+sub_corner_topic = "corner"
+sub_qr_topic = "qr"
 client = connect_mqtt()
 
 old_posx = 0
@@ -17,17 +19,16 @@ old_value = "S"
 g.add_node(old_value, old_posx, old_posy)
 
 
+# client = mqtt.Client()
+
 def callbackForQR(client, userdata, msg):
     message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
-    print(message)
     parts = message.split(";")  # QR etiketinin standart halinde pozisyonu ayrıştırmak
     g.add_qr(parts[0], parts[1], parts[2])
 
 
-def callback(client, userdata, msg):
+def callbackForCorner(client, userdata, msg):
     message = msg.payload.decode('utf-8')
-    parts = message.split(";")  # QR etiketinin standart halinde pozisyonu ayrıştırmak
-    g.add_qr(parts[0], parts[1], parts[2])
 
     nodes = list(g.get_nodes())
     node_id = nodes[len(nodes) - 1]  # Listedeki en son node çağırmak
@@ -77,4 +78,4 @@ def convert_json(graph):
     return converted_json
 
 
-mqtt_sub(broker, sub_topic, callback)
+mqtt_sub(broker, sub_qr_topic, callbackForQR, sub_corner_topic, callbackForCorner)
