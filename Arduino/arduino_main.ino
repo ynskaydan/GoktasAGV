@@ -3,12 +3,12 @@
 #include <L298NX2.h>
 #include <QTRSensors.h>
 
-#define Kp 0.4 
-#define Kd 2.2 
-#define rightMaxSpeed 80 
+#define Kp 0.4
+#define Kd 2.2
+#define rightMaxSpeed 80
 #define leftMaxSpeed 80
-#define rightBaseSpeed 65 
-#define leftBaseSpeed 65 
+#define rightBaseSpeed 65
+#define leftBaseSpeed 65
 
 #define leftFarSensor 49
 #define leftOuterSensor 48
@@ -49,10 +49,10 @@ const char* mqtt_server = "192.168.1.100";
 const int mqtt_port = 1883;
 
 // ENC28J60 ethernet modülü ayarları
-byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
-byte ip[] = {192, 168, 1, 43};
-byte subnet[] = {255, 255, 255, 0};
-byte gateway[] = {192, 168, 1, 1};
+byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
+byte ip[] = { 192, 168, 1, 43 };
+byte subnet[] = { 255, 255, 255, 0 };
+byte gateway[] = { 192, 168, 1, 1 };
 
 // MQTT konusu ve istemci adı
 const char* mqtt_topic = "move";
@@ -63,7 +63,7 @@ EthernetClient ethClient;
 PubSubClient mqttClient(ethClient);
 void setup() {
   Serial.begin(9600);
-  
+
   // ENC28J60 ethernet modülünü başlat
   Ethernet.init(10);
   Ethernet.begin(mac, ip, gateway, subnet);
@@ -71,6 +71,36 @@ void setup() {
   // MQTT istemcisini ayarla
   mqttClient.setServer(mqtt_server, mqtt_port);
   mqttClient.setCallback(mqtt_callback);
+  
+  qtr.setTypeRC();
+  qtr.setSensorPins((const uint8_t[]){ 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49 }, SensorCount);
+  qtr.setEmitterPin(2);
+  pinMode(rightMotor1, OUTPUT);
+  pinMode(rightMotor2, OUTPUT);
+  pinMode(rightMotorE, OUTPUT);
+  pinMode(leftMotor1, OUTPUT);
+  pinMode(leftMotor2, OUTPUT);
+  pinMode(leftMotorE, OUTPUT);
+
+
+  pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);  // turn on Arduino's LED to indicate we are in calibration mode
+
+
+  int i;
+  for (int i = 0; i < 100; i++) {
+    if (i < 25 || i >= 75) {
+      turn_right();
+    } else {
+      turn_left();
+    }
+    qtr.calibrate();
+    delay(20);
+  }
+  wait();
+  digitalWrite(LED_BUILTIN, LOW);
+
+  delay(1000);
 }
 
 void loop() {
@@ -85,40 +115,6 @@ QTRSensors qtr;
 
 const uint8_t SensorCount = 16;
 unsigned int sensorValues[SensorCount];
-
-void setup()
-{
-  qtr.setTypeRC();
-  qtr.setSensorPins((const uint8_t[]){34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49}, SensorCount);
-  qtr.setEmitterPin(2);
-  pinMode(rightMotor1, OUTPUT);
-  pinMode(rightMotor2, OUTPUT);
-  pinMode(rightMotorE, OUTPUT);
-  pinMode(leftMotor1, OUTPUT);
-  pinMode(leftMotor2, OUTPUT);
-  pinMode(leftMotorE, OUTPUT);
-
-
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH); // turn on Arduino's LED to indicate we are in calibration mode
-
-
-  int i;
-  for (int i = 0; i < 100; i++) { 
-    if ( i  < 25 || i >= 75 ) {
-      turn_right();
-    } 
-    else {
-      turn_left();
-    }
-    qtr.calibrate();
-    delay(20);
-  }
-  wait(); 
-  digitalWrite(LED_BUILTIN, LOW); 
-
-  delay(1000); 
-}
 const unsigned int EN_left = 10;
 const unsigned int leftmotor1 = 4;
 const unsigned int leftmotor2 = 5;
@@ -142,68 +138,80 @@ void reconnect_mqtt() {
     }
   }
 }
-void loopManualControl() {
-  if (Serial.available()) { // check if there is any input from the console
-    int mode = Serial.parseInt(); // read an integer from the console
-    //mode 1= for autonomous control , mode 2= for manual control
-    if(mode==1){void mqtt_callback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("MQTT mesaji alindi: ");
-  Serial.write(payload, length);
+void mqtt_callback_move(char* topic, byte* payload, unsigned int length) {
+    
+  Serial.print("Message arrived [");
+  Serial.print("move");
+  Serial.print("] ");
+  for (int i=0;i<length;i++) {
+    Serial.print((char)payload[i]);
+   }
   Serial.println();
-
-  if (strcmp((char*)payload, "w") == 0) {
-    Serial.println("Ileri mesaji alindi");
-    motors.run(L298N::FORWARD);
-    motors.setSpeedB(60);
-    motors.setSpeedA(60);
-  } else if (strcmp((char*)payload, "s") == 0) {
-    Serial.println("Geri mesaji alindi");
-     motors.run(L298N::BACKWARD);
-    motors.setSpeedB(60);
-    motors.setSpeedA(60);
-  } else if (strcmp((char*)payload, "d") == 0) {
-    Serial.println("Sag mesaji alindi");
-    motors.run(L298N::FORWARD);
-    motors.setSpeedB(0);
-    motors.setSpeedA(60);
-
-  }else if (strcmp((char*)payload, "a") == 0) {
-    Serial.println("Sol mesaji alindi");
-    motors.run(L298N::FORWARD);
-    motors.setSpeedB(60);
-    motors.setSpeedA(0);
-  }
 }
-      
+void mqtt_callback_move(char* topic, byte* payload, unsigned int length) {
+    
+  Serial.print("Message arrived [");
+  Serial.print("move");
+  Serial.print("] ");
+  for (int i=0;i<length;i++) {
+    Serial.print((char)payload[i]);
+   }
+  Serial.println();
+}
+
+void manualControl() {
+  if (Serial.available()) {  // check if there is any input from the console
+
+    client.subscribe("move");
+
+    if (strcmp((char*)payload, "w") == 0) {
+      Serial.println("Ileri mesaji alindi");
+      motors.run(L298N::FORWARD);
+      motors.setSpeedB(60);
+      motors.setSpeedA(60);
+    } else if (strcmp((char*)payload, "s") == 0) {
+      Serial.println("Geri mesaji alindi");
+      motors.run(L298N::BACKWARD);
+      motors.setSpeedB(60);
+      motors.setSpeedA(60);
+    } else if (strcmp((char*)payload, "d") == 0) {
+      Serial.println("Sag mesaji alindi");
+      motors.run(L298N::FORWARD);
+      motors.setSpeedB(0);
+      motors.setSpeedA(60);
+
+    } else if (strcmp((char*)payload, "a") == 0) {
+      Serial.println("Sol mesaji alindi");
+      motors.run(L298N::FORWARD);
+      motors.setSpeedB(60);
+      motors.setSpeedA(0);
     }
-  else{int lastError = 0;
-void loopLineFollowing(){
-  // read calibrated sensor values and obtain a measure of the line position
-  unsigned int position = qtr.readLineBlack(sensorValues);
 
 
-  int error = position - 7500;
-  int motorSpeed = Kp * error + Kd * (error - lastError);
-  lastError = error;
-  int rightMotorSpeed = rightBaseSpeed + motorSpeed;
-  int leftMotorSpeed = leftBaseSpeed - motorSpeed;
-  if (rightMotorSpeed > rightMaxSpeed ) rightMotorSpeed = rightMaxSpeed;
-  if (leftMotorSpeed > leftMaxSpeed ) leftMotorSpeed = leftMaxSpeed;
-  if (rightMotorSpeed < 0) rightMotorSpeed = 0;
-  if (leftMotorSpeed < 0) leftMotorSpeed = 0;
-  
 
-    digitalWrite(rightMotor1, HIGH);
-    digitalWrite(rightMotor2, LOW);
-    analogWrite(rightMotorE, rightMotorSpeed);
-
-    digitalWrite(leftMotor1, HIGH);
-    digitalWrite(leftMotor2, LOW);
-    analogWrite(leftMotorE, leftMotorSpeed);
-  
-}
+      int lastError = 0;
+      void loopLineFollowing() {
+        // read calibrated sensor values and obtain a measure of the line position
+        unsigned int position = qtr.readLineBlack(sensorValues);
 
 
+        int error = position - 7500;
+        int motorSpeed = Kp * error + Kd * (error - lastError);
+        lastError = error;
+        int rightMotorSpeed = rightBaseSpeed + motorSpeed;
+        int leftMotorSpeed = leftBaseSpeed - motorSpeed;
+        if (rightMotorSpeed > rightMaxSpeed) rightMotorSpeed = rightMaxSpeed;
+        if (leftMotorSpeed > leftMaxSpeed) leftMotorSpeed = leftMaxSpeed;
+        if (rightMotorSpeed < 0) rightMotorSpeed = 0;
+        if (leftMotorSpeed < 0) leftMotorSpeed = 0;
+
+
+        digitalWrite(rightMotor1, HIGH);
+        digitalWrite(rightMotor2, LOW);
+        analogWrite(rightMotorE, rightMotorSpeed);
+
+        digitalWrite(leftMotor1, HIGH);
+        digitalWrite(leftMotor2, LOW);
+        analogWrite(leftMotorE, leftMotorSpeed);
+      }
   }
-  }
-}
