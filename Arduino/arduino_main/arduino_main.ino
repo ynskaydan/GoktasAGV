@@ -75,7 +75,7 @@ void setup() {
   Serial.println("Ethernet connected");
   // MQTT istemcisini ayarla
   mqttClient.setServer(mqtt_server, mqtt_port);
-  mqttClient.setCallback(mqtt_callback);
+  mqttClient.setCallback(callback);
 
   while (!mqttClient.connected()) {
     if (mqttClient.connect("Arduino client")) {
@@ -130,15 +130,15 @@ void loop() {
 }
 
 void reconnect() {
-  while (!client.connected()) {
+  while (!mqttClient.connected()) {
     Serial.println("Attempting MQTT connection...");
-    if (client.connect("ArduinoClient")) {
+    if (mqttClient.connect("ArduinoClient")) {
       Serial.println("Connected to MQTT broker");
-      client.subscribe(mqtt_topic_move);
-      client.subscribe(mqtt_topic_heartbit);
+      mqttClient.subscribe(mqtt_topic_move);
+      mqttClient.subscribe(mqtt_topic_heartbit);
     } else {
       Serial.print("Failed to connect to MQTT broker, rc=");
-      Serial.print(client.state());
+      Serial.print(mqttClient.state());
       Serial.println(" retrying...");
       delay(5000);
     }
@@ -176,7 +176,7 @@ void callback(char* topic, byte* message, unsigned int length) {
 
     Serial.println("Received message on topic2: " + messageStr);
   } else if (topicStr == "eklenecek topic") {
-  }    
+  }
 }
 
 
@@ -192,18 +192,17 @@ void manualControl(String message) {
     motors.run(L298N::BACKWARD);
     motors.setSpeedB(60);
     motors.setSpeedA(60);
-  } else if (message == "D") == 0) {
-      Serial.println("Sag mesaji alindi");
-      motors.run(L298N::FORWARD);
-      motors.setSpeedB(0);
-      motors.setSpeedA(60);
-    }
-  else if (message == "A") == 0) {
-      Serial.println("Sol mesaji alindi");
-      motors.run(L298N::FORWARD);
-      motors.setSpeedB(60);
-      motors.setSpeedA(0);
-    }
+  } else if (message == "D") {
+    Serial.println("Sag mesaji alindi");
+    motors.run(L298N::FORWARD);
+    motors.setSpeedB(0);
+    motors.setSpeedA(60);
+  } else if (message == "A") {
+    Serial.println("Sol mesaji alindi");
+    motors.run(L298N::FORWARD);
+    motors.setSpeedB(60);
+    motors.setSpeedA(0);
+  }
 }
 
 
