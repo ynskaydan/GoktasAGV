@@ -55,7 +55,8 @@ byte subnet[] = { 255, 255, 255, 0 };
 byte gateway[] = { 192, 168, 1, 1 };
 
 // MQTT konusu ve istemci adı
-const char* mqtt_topic = "move";
+const char* mqtt_topic_move = "move";
+const char* mqtt_topic_heartbit = "heartbit";
 const char* mqtt_client_name = "arduino";
 
 // MQTT istemci nesnesi
@@ -67,11 +68,28 @@ void setup() {
   // ENC28J60 ethernet modülünü başlat
   Ethernet.init(10);
   Ethernet.begin(mac, ip, gateway, subnet);
-
+  while (Ethernet.linkStatus() == LinkOFF) {
+    Serial.println("Ethernet cable is not connected");
+    delay(500);
+  }
+  Serial.println("Ethernet connected");
   // MQTT istemcisini ayarla
   mqttClient.setServer(mqtt_server, mqtt_port);
   mqttClient.setCallback(mqtt_callback);
-  
+
+  while (!mqttClient.connected()) {
+    if (mqttClient.connect("Arduino client")) {
+      Serial.println("Connected to MQTT broker");
+      mqttClient.subscribe(mqtt_topic_move);
+      mqttClient.subscribe(mqtt_topic_heartbit);
+    } else {
+      Serial.print("Failed to connect to MQTT broker, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" retrying...");
+      delay(5000);
+    }
+  }
+
   qtr.setTypeRC();
   qtr.setSensorPins((const uint8_t[]){ 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49 }, SensorCount);
   qtr.setEmitterPin(2);
@@ -106,11 +124,26 @@ void setup() {
 void loop() {
   // MQTT bağlantısını kontrol et
   if (!mqttClient.connected()) {
-    reconnect_mqtt();
+    reconnect();
   }
   mqttClient.loop();
 }
 
+void reconnect() {
+  while (!client.connected()) {
+    Serial.println("Attempting MQTT connection...");
+    if (client.connect("ArduinoClient")) {
+      Serial.println("Connected to MQTT broker");
+      client.subscribe(mqtt_topic_move);
+      client.subscribe(mqtt_topic_heartbit);
+    } else {
+      Serial.print("Failed to connect to MQTT broker, rc=");
+      Serial.print(client.state());
+      Serial.println(" retrying...");
+      delay(5000);
+    }
+  }
+}
 QTRSensors qtr;
 
 const uint8_t SensorCount = 16;
@@ -125,93 +158,77 @@ const unsigned int EN_right = 9;
 
 L298NX2 motors(EN_right, rightmotor1, rightmotor2, EN_left, leftmotor1, leftmotor2);
 
-void reconnect_mqtt() {
-  while (!mqttClient.connected()) {
-    Serial.print("MQTT sunucusuna baglaniliyor...");
-    if (mqttClient.connect(mqtt_client_name)) {
-      Serial.println("Baglanti basarili");
-      mqttClient.subscribe(mqtt_topic);
-    } else {
-      Serial.print("Baglanti hatasi: ");
-      Serial.println(mqttClient.state());
-      delay(2000);
-    }
+
+void callback(char* topic, byte* message, unsigned int length) {
+  String topicStr = String(topic);
+  String messageStr = "";
+
+  for (int i = 0; i < length; i++) {
+    messageStr += (char)message[i];
   }
-}
-void mqtt_callback_move(char* topic, byte* payload, unsigned int length) {
-    
-  Serial.print("Message arrived [");
-  Serial.print("move");
-  Serial.print("] ");
-  for (int i=0;i<length;i++) {
-    Serial.print((char)payload[i]);
-   }
-  Serial.println();
-}
-void mqtt_callback_move(char* topic, byte* payload, unsigned int length) {
-    
-  Serial.print("Message arrived [");
-  Serial.print("move");
-  Serial.print("] ");
-  for (int i=0;i<length;i++) {
-    Serial.print((char)payload[i]);
-   }
-  Serial.println();
+
+  if (topicStr == mqtt_topic_move) {
+    // callback for topic1
+    manualControl(messageStr);
+    Serial.println("Received message on topic1: " + messageStr);
+    // do something
+  } else if (topicStr == mqtt_topic_heartbit) {
+
+    Serial.println("Received message on topic2: " + messageStr);
+  } else if (topicStr == "eklenecek topic") {
+  }    
 }
 
-void manualControl() {
-  if (Serial.available()) {  // check if there is any input from the console
 
-    client.subscribe("move");
+void manualControl(String message) {
 
-    if (strcmp((char*)payload, "w") == 0) {
-      Serial.println("Ileri mesaji alindi");
-      motors.run(L298N::FORWARD);
-      motors.setSpeedB(60);
-      motors.setSpeedA(60);
-    } else if (strcmp((char*)payload, "s") == 0) {
-      Serial.println("Geri mesaji alindi");
-      motors.run(L298N::BACKWARD);
-      motors.setSpeedB(60);
-      motors.setSpeedA(60);
-    } else if (strcmp((char*)payload, "d") == 0) {
+  if (message == "W") {
+    Serial.println("Ileri mesaji alindi");
+    motors.run(L298N::FORWARD);
+    motors.setSpeedB(60);
+    motors.setSpeedA(60);
+  } else if (message == "S") {
+    Serial.println("Geri mesaji alindi");
+    motors.run(L298N::BACKWARD);
+    motors.setSpeedB(60);
+    motors.setSpeedA(60);
+  } else if (message == "D") == 0) {
       Serial.println("Sag mesaji alindi");
       motors.run(L298N::FORWARD);
       motors.setSpeedB(0);
       motors.setSpeedA(60);
-
-    } else if (strcmp((char*)payload, "a") == 0) {
+    }
+  else if (message == "A") == 0) {
       Serial.println("Sol mesaji alindi");
       motors.run(L298N::FORWARD);
       motors.setSpeedB(60);
       motors.setSpeedA(0);
     }
+}
 
 
-
-      int lastError = 0;
-      void loopLineFollowing() {
-        // read calibrated sensor values and obtain a measure of the line position
-        unsigned int position = qtr.readLineBlack(sensorValues);
-
-
-        int error = position - 7500;
-        int motorSpeed = Kp * error + Kd * (error - lastError);
-        lastError = error;
-        int rightMotorSpeed = rightBaseSpeed + motorSpeed;
-        int leftMotorSpeed = leftBaseSpeed - motorSpeed;
-        if (rightMotorSpeed > rightMaxSpeed) rightMotorSpeed = rightMaxSpeed;
-        if (leftMotorSpeed > leftMaxSpeed) leftMotorSpeed = leftMaxSpeed;
-        if (rightMotorSpeed < 0) rightMotorSpeed = 0;
-        if (leftMotorSpeed < 0) leftMotorSpeed = 0;
+void loopLineFollowing() {
+  int lastError = 0;
+  // read calibrated sensor values and obtain a measure of the line position
+  unsigned int position = qtr.readLineBlack(sensorValues);
 
 
-        digitalWrite(rightMotor1, HIGH);
-        digitalWrite(rightMotor2, LOW);
-        analogWrite(rightMotorE, rightMotorSpeed);
+  int error = position - 7500;
+  int motorSpeed = Kp * error + Kd * (error - lastError);
+  lastError = error;
+  int rightMotorSpeed = rightBaseSpeed + motorSpeed;
+  int leftMotorSpeed = leftBaseSpeed - motorSpeed;
+  if (rightMotorSpeed > rightMaxSpeed) rightMotorSpeed = rightMaxSpeed;
+  if (leftMotorSpeed > leftMaxSpeed) leftMotorSpeed = leftMaxSpeed;
+  if (rightMotorSpeed < 0) rightMotorSpeed = 0;
+  if (leftMotorSpeed < 0) leftMotorSpeed = 0;
 
-        digitalWrite(leftMotor1, HIGH);
-        digitalWrite(leftMotor2, LOW);
-        analogWrite(leftMotorE, leftMotorSpeed);
-      }
-  }
+
+  digitalWrite(rightMotor1, HIGH);
+  digitalWrite(rightMotor2, LOW);
+  analogWrite(rightMotorE, rightMotorSpeed);
+
+  digitalWrite(leftMotor1, HIGH);
+  digitalWrite(leftMotor2, LOW);
+  analogWrite(leftMotorE, leftMotorSpeed);
+}
