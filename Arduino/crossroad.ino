@@ -1,11 +1,11 @@
 #include <QTRSensors.h>
 
-#define Kp 0.4 
-#define Kd 2.2 
-#define rightMaxSpeed 75 
+#define Kp 0.4
+#define Kd 2.2
+#define rightMaxSpeed 75
 #define leftMaxSpeed 75
-#define rightBaseSpeed 65 
-#define leftBaseSpeed 65 
+#define rightBaseSpeed 65
+#define leftBaseSpeed 65
 
 #define leftFarSensor 34
 #define leftOuterSensor 35
@@ -44,7 +44,7 @@ int rightFarReading;
 
 int leftspeed;
 int rightspeed;
-int donushizi=90;
+int donushizi = 90;
 
 QTRSensors qtr;
 
@@ -53,9 +53,9 @@ unsigned int sensorValues[SensorCount];
 unsigned int posit;
 
 void setup() {
-   qtr.setTypeRC();
-   qtr.setSensorPins((const uint8_t[]){34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49}, SensorCount);
- 
+  qtr.setTypeRC();
+  qtr.setSensorPins((const uint8_t[]){ 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49 }, SensorCount);
+
   pinMode(leftCenterSensor, INPUT);
   pinMode(leftNearSensor, INPUT);
   pinMode(leftNearSensor2, INPUT);
@@ -82,37 +82,35 @@ void setup() {
 
 
   pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH); 
+  digitalWrite(LED_BUILTIN, HIGH);
 
   int i;
-  for (int i = 0; i < 100; i++) { 
-    if ( i  < 25 || i >= 75 ) {
+  for (int i = 0; i < 100; i++) {
+    if (i < 25 || i >= 75) {
       turn_right();
-    }
-    else {
+    } else {
       turn_left();
     }
     qtr.calibrate();
     delay(20);
   }
-  wait(); 
-  digitalWrite(LED_BUILTIN, LOW); 
+  wait();
+  digitalWrite(LED_BUILTIN, LOW);
 
-  delay(3000); 
+  delay(3000);
 }
-  void loop() {
+void loop() {
   readSensors();
-  while ((leftFarReading < 200 && rightFarReading < 200 ) && (leftCenterReading > 200 && rightCenterReading > 200 )) {
+  while ((leftFarReading < 200 && rightFarReading < 200) && (leftCenterReading > 200 && rightCenterReading > 200)) {
     delay(1500);
     ilerle();
     delay(6);
     Serial.println("ilerliyor");
     readSensors();
-   }
+  }
 
-  
-    crossroadFinding();
-  
+
+  crossroadFinding();
 }
 void readSensors() {
   leftCenterReading = digitalRead(leftCenterSensor);
@@ -125,145 +123,95 @@ void readSensors() {
   rightFarReading = digitalRead(rightFarSensor);
 }
 void crossroadFinding() {
- /*if (leftFarReading < 200 && rightFarReading < 200 && leftOuterReading < 200 && rightOuterReading < 200 && leftNearReading < 200 && rightNearReading < 200 && leftCenterReading < 200 && rightCenterReading < 200) {
+  if (leftFarReading < 200 && rightFarReading < 200 && leftOuterReading < 200 && rightOuterReading < 200 && leftNearReading < 200 && rightNearReading < 200 && leftCenterReading < 200 && rightCenterReading < 200) {
     turnAround();
     Serial.println("geri dönüyor");
     return;
-  }*/
-    if ((leftNearReading > 200 && rightNearReading > 200) || (leftOuterReading > 200 && rightOuterReading > 200) ) {
-      Serial.println("T kavşak algılandı");
-      digitalWrite(leftMotor1,HIGH);
-      digitalWrite(leftMotor2, LOW);
-      digitalWrite(rightMotor1, HIGH);
-      digitalWrite(rightMotor2, LOW);
-      analogWrite(rightMotorE, rightBaseSpeed);
-      analogWrite(leftMotorE, leftBaseSpeed);
-      delay(leapTime);
-       // çizgiyi geçtikten sonra tekrar sensör değeri okuyor
-      readSensors();
-     
-      // sağ ve solda çizgi yoksa planlandığı halindeyken input gelmesini bekleyecek
-      if (leftFarReading < 200 && rightFarReading < 200) {
-        Serial.println("Sola dönülüyor...");
-        delay(1500);
-        turnLeft();
-      }
-    return;
-    }
-  if (leftFarReading > 200 && rightFarReading < 200) { 
-    Serial.println("Sol L kavşak algılandı.");
-    digitalWrite(leftMotor1,HIGH);
+  }
+  if ((leftNearReading > 200 && rightNearReading > 200) || (leftOuterReading > 200 && rightOuterReading > 200)) {
+    Serial.println("T kavşak algılandı");
+    digitalWrite(leftMotor1, HIGH);
     digitalWrite(leftMotor2, LOW);
     digitalWrite(rightMotor1, HIGH);
     digitalWrite(rightMotor2, LOW);
-  analogWrite(rightMotorE, rightBaseSpeed);
-  analogWrite(leftMotorE, leftBaseSpeed);
+    analogWrite(rightMotorE, rightBaseSpeed);
+    analogWrite(leftMotorE, leftBaseSpeed);
+    delay(leapTime);
+    // çizgiyi geçtikten sonra tekrar sensör değeri okuyor
+    readSensors();
+
+    // sağ ve solda çizgi yoksa planlandığı halindeyken input gelmesini bekleyecek
+    if (leftFarReading < 200 && rightFarReading < 200) {
+      Serial.println("Sola dönülüyor...");
+      delay(1500);
+      turnLeft();
+    }
+    return;
+  }
+  if (leftFarReading > 200 && rightFarReading < 200) {
+    Serial.println("Sol L kavşak algılandı.");
+    digitalWrite(leftMotor1, HIGH);
+    digitalWrite(leftMotor2, LOW);
+    digitalWrite(rightMotor1, HIGH);
+    digitalWrite(rightMotor2, LOW);
+    analogWrite(rightMotorE, rightBaseSpeed);
+    analogWrite(leftMotorE, leftBaseSpeed);
     delay(leapTime);
     readSensors();
-    if (leftFarReading < 200 && leftOuterReading < 200) { 
+    if (leftFarReading < 200 && leftOuterReading < 200) {
       Serial.println("Sola dönülüyor");
       delay(1500);
       turnLeft();
     }
-   
-    return;
 
+    return;
   }
-  if ((rightFarReading > 200 && rightOuterReading > 200) && (leftFarReading < 200 && leftOuterReading < 200)) { // sağa dönüş
+  if ((rightFarReading > 200 && rightOuterReading > 200) && (leftFarReading < 200 && leftOuterReading < 200)) {  // sağa dönüş
     Serial.println("Sağ L kavşak algılandı.");
-    digitalWrite(leftMotor1,HIGH);
+    digitalWrite(leftMotor1, HIGH);
     digitalWrite(leftMotor2, LOW);
     digitalWrite(rightMotor1, HIGH);
     digitalWrite(rightMotor2, LOW);
-  analogWrite(rightMotorE, rightBaseSpeed);
-  analogWrite(leftMotorE, leftBaseSpeed);
+    analogWrite(rightMotorE, rightBaseSpeed);
+    analogWrite(leftMotorE, leftBaseSpeed);
     delay(leapTime);
     readSensors();
-    if (leftCenterReading > 200 || rightCenterReading > 200) { 
+    if (leftCenterReading > 200 || rightCenterReading > 200) {
       Serial.println("ortadan gidiyor");
       delay(1500);
       ilerle();
       return;
-    }
-    else  { 
-    delay(1500);    
+    } else {
+      delay(1500);
       turnRight();
       Serial.println("Sağa dönüş yapılıyor...");
       return;
     }
-
   }
 }
 
 void turn_left() {
-      digitalWrite(rightMotor1,HIGH);
-    digitalWrite(rightMotor2, LOW);
-    analogWrite (rightMotorE,90); 
+  digitalWrite(rightMotor1, HIGH);
+  digitalWrite(rightMotor2, LOW);
+  analogWrite(rightMotorE, 90);
 
-    digitalWrite(leftMotor1, LOW);
-    digitalWrite(leftMotor2, HIGH);
-    analogWrite (leftMotorE,90);
+  digitalWrite(leftMotor1, LOW);
+  digitalWrite(leftMotor2, HIGH);
+  analogWrite(leftMotorE, 90);
 }
 void turn_right() {
-      digitalWrite(rightMotor1,LOW);
-    digitalWrite(rightMotor2, HIGH);
-    analogWrite (rightMotorE,90);   
+  digitalWrite(rightMotor1, LOW);
+  digitalWrite(rightMotor2, HIGH);
+  analogWrite(rightMotorE, 90);
 
-    digitalWrite(leftMotor1, HIGH);
-    digitalWrite(leftMotor2, LOW);
-    analogWrite (leftMotorE,90);    
+  digitalWrite(leftMotor1, HIGH);
+  digitalWrite(leftMotor2, LOW);
+  analogWrite(leftMotorE, 90);
 }
 void turnLeft() {
-  
-    
-  while (digitalRead(leftCenterSensor) > 200 || digitalRead(rightCenterSensor) > 200 ) {
-    digitalWrite(leftMotor1, LOW);
-    digitalWrite(leftMotor2, HIGH);
-    digitalWrite(rightMotor1, HIGH);
-    digitalWrite(rightMotor2, LOW);
-    analogWrite(rightMotorE, donushizi);
-    analogWrite(leftMotorE, donushizi);
-    delay(5);
-    digitalWrite(leftMotor1, LOW);
-    digitalWrite(leftMotor2, LOW);
-    digitalWrite(rightMotor1, LOW);
-    digitalWrite(rightMotor2, LOW);
-    delay(2);
-  }
-  while (digitalRead(leftCenterSensor) < 200) {
-    digitalWrite(leftMotor1, LOW);
-    digitalWrite(leftMotor2, HIGH);
-    digitalWrite(rightMotor1, HIGH);
-    digitalWrite(rightMotor2, LOW);
-    analogWrite(rightMotorE, donushizi);
-    analogWrite(leftMotorE, donushizi);    
-    delay(4);
-    digitalWrite(leftMotor1, LOW);
-    digitalWrite(leftMotor2, LOW);
-    digitalWrite(rightMotor1, LOW);
-    digitalWrite(rightMotor2, LOW);
-    delay(1);
-  }
-  while (digitalRead(rightCenterSensor) < 200) {
-    digitalWrite(leftMotor1, LOW);
-    digitalWrite(leftMotor2, HIGH);
-    digitalWrite(rightMotor1, HIGH);
-    digitalWrite(rightMotor2, LOW);
-    analogWrite(rightMotorE, donushizi);
-    analogWrite(leftMotorE, donushizi);
-    delay(4);
-    digitalWrite(leftMotor1, LOW);
-    digitalWrite(leftMotor2, LOW);
-    digitalWrite(rightMotor1, LOW);
-    digitalWrite(rightMotor2, LOW);
-    delay(1);
-  }
-  
 
-}//voidturnleft
-void turnRight() {
-    
-  while (digitalRead(leftCenterSensor) > 200 || digitalRead(rightCenterSensor) > 200 ) {
+
+  while (digitalRead(leftCenterSensor) > 200 || digitalRead(rightCenterSensor) > 200) {
     digitalWrite(leftMotor1, LOW);
     digitalWrite(leftMotor2, HIGH);
     digitalWrite(rightMotor1, HIGH);
@@ -277,14 +225,61 @@ void turnRight() {
     digitalWrite(rightMotor2, LOW);
     delay(2);
   }
- 
+  while (digitalRead(leftCenterSensor) < 200) {
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, HIGH);
+    digitalWrite(rightMotor1, HIGH);
+    digitalWrite(rightMotor2, LOW);
+    analogWrite(rightMotorE, donushizi);
+    analogWrite(leftMotorE, donushizi);
+    delay(4);
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, LOW);
+    digitalWrite(rightMotor1, LOW);
+    digitalWrite(rightMotor2, LOW);
+    delay(1);
+  }
+  while (digitalRead(rightCenterSensor) < 200) {
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, HIGH);
+    digitalWrite(rightMotor1, HIGH);
+    digitalWrite(rightMotor2, LOW);
+    analogWrite(rightMotorE, donushizi);
+    analogWrite(leftMotorE, donushizi);
+    delay(4);
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, LOW);
+    digitalWrite(rightMotor1, LOW);
+    digitalWrite(rightMotor2, LOW);
+    delay(1);
+  }
+
+
+}  //voidturnleft
+void turnRight() {
+
+  while (digitalRead(leftCenterSensor) > 200 || digitalRead(rightCenterSensor) > 200) {
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, HIGH);
+    digitalWrite(rightMotor1, HIGH);
+    digitalWrite(rightMotor2, LOW);
+    analogWrite(rightMotorE, donushizi);
+    analogWrite(leftMotorE, donushizi);
+    delay(5);
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, LOW);
+    digitalWrite(rightMotor1, LOW);
+    digitalWrite(rightMotor2, LOW);
+    delay(2);
+  }
+
   while (digitalRead(rightCenterSensor) < 200) {
     digitalWrite(leftMotor1, HIGH);
     digitalWrite(leftMotor2, LOW);
     digitalWrite(rightMotor1, LOW);
     digitalWrite(rightMotor2, HIGH);
     analogWrite(rightMotorE, donushizi);
-    analogWrite(leftMotorE, donushizi);    
+    analogWrite(leftMotorE, donushizi);
     delay(4);
     digitalWrite(leftMotor1, LOW);
     digitalWrite(leftMotor2, LOW);
@@ -298,17 +293,16 @@ void turnRight() {
     digitalWrite(rightMotor1, LOW);
     digitalWrite(rightMotor2, HIGH);
     analogWrite(rightMotorE, donushizi);
-    analogWrite(leftMotorE, donushizi);    
+    analogWrite(leftMotorE, donushizi);
     delay(4);
     digitalWrite(leftMotor1, LOW);
     digitalWrite(leftMotor2, LOW);
     digitalWrite(rightMotor1, LOW);
     digitalWrite(rightMotor2, LOW);
     delay(1);
-  }  
-} //voidturnright
-void ilerle()
-{
+  }
+}  //voidturnright
+void ilerle() {
   unsigned int position = qtr.readLineBlack(sensorValues);
 
   int lastError = 0;
@@ -317,25 +311,24 @@ void ilerle()
   lastError = error;
   int rightMotorSpeed = rightBaseSpeed + motorSpeed;
   int leftMotorSpeed = leftBaseSpeed - motorSpeed;
-  if (rightMotorSpeed > rightMaxSpeed ) rightMotorSpeed = rightMaxSpeed;
-  if (leftMotorSpeed > leftMaxSpeed ) leftMotorSpeed = leftMaxSpeed;
+  if (rightMotorSpeed > rightMaxSpeed) rightMotorSpeed = rightMaxSpeed;
+  if (leftMotorSpeed > leftMaxSpeed) leftMotorSpeed = leftMaxSpeed;
   if (rightMotorSpeed < 0) rightMotorSpeed = 0;
   if (leftMotorSpeed < 0) leftMotorSpeed = 0;
-  
 
-    digitalWrite(rightMotor1, HIGH);
-    digitalWrite(rightMotor2, LOW);
-    analogWrite(rightMotorE, rightMotorSpeed);
 
-    digitalWrite(leftMotor1, HIGH);
-    digitalWrite(leftMotor2, LOW);
-    analogWrite(leftMotorE, leftMotorSpeed);
-  
+  digitalWrite(rightMotor1, HIGH);
+  digitalWrite(rightMotor2, LOW);
+  analogWrite(rightMotorE, rightMotorSpeed);
+
+  digitalWrite(leftMotor1, HIGH);
+  digitalWrite(leftMotor2, LOW);
+  analogWrite(leftMotorE, leftMotorSpeed);
 }
 
 
 void turnAround() {
-  digitalWrite(leftMotor1,HIGH);
+  digitalWrite(leftMotor1, HIGH);
   digitalWrite(leftMotor2, LOW);
   digitalWrite(rightMotor1, HIGH);
   digitalWrite(rightMotor2, LOW);
@@ -356,24 +349,20 @@ void turnAround() {
     digitalWrite(rightMotor2, LOW);
     delay(2);
   }
-  
 }
 void fren() {
-    digitalWrite(rightMotor1,HIGH);
-    digitalWrite(rightMotor2, HIGH);
-   
+  digitalWrite(rightMotor1, HIGH);
+  digitalWrite(rightMotor2, HIGH);
 
-    digitalWrite(leftMotor1, HIGH);
-    digitalWrite(leftMotor2, HIGH);
-    
+
+  digitalWrite(leftMotor1, HIGH);
+  digitalWrite(leftMotor2, HIGH);
 }
 void wait() {
-    digitalWrite(rightMotor1,LOW);
-    digitalWrite(rightMotor2, LOW);
-   
+  digitalWrite(rightMotor1, LOW);
+  digitalWrite(rightMotor2, LOW);
 
-    digitalWrite(leftMotor1, LOW);
-    digitalWrite(leftMotor2, LOW);
-    
+
+  digitalWrite(leftMotor1, LOW);
+  digitalWrite(leftMotor2, LOW);
 }
-
