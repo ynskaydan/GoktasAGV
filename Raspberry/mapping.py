@@ -12,39 +12,68 @@ client = connect_mqtt()
 old_posx = 0
 old_posy = 0
 old_value = "S"
-
-g.add_node(old_value, old_posx, old_posy)
+type = "Start"
+unvisited = {}
+g.add_node(old_value, old_posx, old_posy, type, unvisited)
 
 direction = "E"
 
 
-def update_position(qr, corner_type, direction):
+def get_corner_data(corner_type, direction, qr):
     corner_actions = {
-        "UPPER_L1": {"E": ("N", -10, 0), "S": ("W", 0, -10)},
-        "UPPER_L2": {"W": ("N", 10, 0), "S": ("E", 0, -10)},
-        "DOWN_L1": {"N": ("E", 0, 10), "W": ("S", 10, 0)},
-        "DOWN_L2": {"N": ("W", 0, 10), "E": ("S", -10, 0)},
-        "T": {"N": (None, 0, 10), "E": (None, -10, 0), "W": (None, 10, 0)},
-        "DOWN_T": {"S": (None, 0, -10), "E": (None, 10, 0), "W": (None, -10, 0)},
-        "RIGHT_T": {"S": (None, 0, 10), "N": (None, 0, -10), "E": (None, -10, 0)},
-        "LEFT_T": {"S": (None, 0, 10), "N": (None, 0, -10), "W": (None, 10, 0)}
+        "LEFT_L": {
+            "N": (0, 10, "E"),
+            "E": (-10, 0, "N"),
+            "S": (0, -10, "W"),
+            "W": (10, 0, "S"),
+        },
+        "RIGHT_L": {
+            "N": (0, 10, "W"),
+            "E": (-10, 0, "S"),
+            "S": (0, -10, "E"),
+            "W": (10, 0, "N"),
+        },
+        "T": {
+            "N": (0, 10, "W", ["E"]),
+            "E": (-10, 0, "E", ["S"]),
+            "S": (0, -10, "W", ["S"]),
+            "W": (10, 0, "W", ["S"]),
+        },
+        "DOWN_T": {
+            "S": (0, -10, "W", ["E"]),
+            "E": (-10, 0, "E", ["N"]),
+            "W": (10, 0, "W", ["N"]),
+        },
+        # "SIDEWAYS_T": {
+        #     "N": (0, 10, "W", ["N"]),
+        #     "E": (-10, 0, "N", ["S"]),
+        #     "S": (0, -10, "W", ["S"]),
+        #     "W": (10, 0, "N", ["S"]),
+        # },
     }
 
-    if corner_type in corner_actions:
-        action = corner_actions[corner_type].get(direction)
-        if action:
-            direction, dx, dy = action
-            posx, posy = qr.get_pos_x() + dx, qr.get_pos_y() + dy
-            if direction:
-                return posx, posy, direction
+    unvisited_directions = []
+    posx = qr.get_pos_x()
+    posy = qr.get_pos_y()
 
-    print(f"Failed to read message from topic {sub_corner_topic}")
+    if corner_type in corner_actions:
+        if direction in corner_actions[corner_type]:
+            action = corner_actions[corner_type][direction]
+            posx += action[0]
+            posy += action[1]
+            direction = action[2]
+            if len(action) > 3:
+                unvisited_directions = action[3]
+
+    return posx, posy, direction, unvisited_directions
 
 
 def callback_for_qr(client, userdata, msg):
     message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
     parts = message.split(";")  # QR etiketinin standart halinde pozisyonu ayrıştırmak
-    g.add_qr(parts[0], parts[1], parts[2])
+    result = g.add_qr(parts[0], parts[1], parts[2])
+    if result == 0:
+        send_data(client, "QR is already in list", sub_qr_topic)
 
 
 def callback_for_corner(client, userdata, msg):
@@ -59,12 +88,13 @@ def callback_for_corner(client, userdata, msg):
     lastQr = qr_keys[len(qr_keys) - 1]  # en son eklenen qr çağırmak
     qr = g.get_qr(lastQr)
 
-    corner = update_position(qr, corner_type, direction)
+    corner = get_corner_data(corner_type, direction, qr)
     posx = corner[0]
     posy = corner[1]
     direction = corner[2]
+    unvisited_directions = corner[3]
 
-    new_node = g.add_node(g.num_of_nodes, posx, posy)
+    new_node = g.add_node(g.num_of_nodes, posx, posy, corner_type, unvisited_directions)
     weight = int(new_node.get_pos_x() - past_node.get_pos_x()) + int(new_node.get_pos_y() - past_node.get_pos_y())
     g.add_edge(past_node, new_node, weight)
 
@@ -87,8 +117,9 @@ def convert_json(graph):
         for adjacent in adjacents:
             list_adjacents.append(adjacent.get_id())
 
-        nodes.append({"id": node.get_id(), "pos": {"x": x, "y": y}, "adjacents": list_adjacents,
-                      "unvisitedDirections": list_unvisited_directions})
+        nodes.append(
+            {"id": node.get_id(), "pos": {"x": x, "y": y}, "type": node.get_type(), "adjacents": list_adjacents,
+             "unvisitedDirections": list_unvisited_directions})
 
     for qr_id in graph.qr_list:
         qr = g.get_qr(qr_id)

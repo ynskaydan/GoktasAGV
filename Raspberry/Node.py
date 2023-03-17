@@ -1,9 +1,10 @@
 class Node:
-    def __init__(self, id, posx, posy):
+    def __init__(self, id, posx, posy,type,unvisited):
         self.id = id
         self.pos = [posx, posy]
         self.adjacents = {}
-        self.unvisited_directions = {}
+        self.unvisited = unvisited
+        self.type = type
 
     def get_id(self):
         return self.id
@@ -14,9 +15,12 @@ class Node:
     def get_connections(self):
         return self.adjacents.keys()
     def get_unvisited_directions(self):
-        return self.unvisited_directions.keys()
+        return self.unvisited
     def get_weight(self, adjacent_id):
         return self.adjacents[adjacent_id]
+
+    def get_type(self):
+        return self.type
 
     def get_pos_x(self):
         return self.pos[0]
