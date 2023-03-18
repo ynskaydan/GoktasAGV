@@ -80,6 +80,8 @@ flutter:
     - assets/images/right_disable.png
     - assets/images/back_disable.png
     - assets/images/forward_disable.png
+    - assets/images/take.png
+    - assets/images/drop.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

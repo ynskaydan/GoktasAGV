@@ -1,4 +1,17 @@
-# goktasgui
+void addImage(int id, double x, double y) {
+  String imagePath = '';
+  if (id == 1) {
+    imagePath = 'images/car.png';
+  } else if (id == 2) {
+    imagePath = 'images/flower.png';
+  }
+  AssetImage image = AssetImage(imagePath);
+  ImageConfiguration configuration = createLocalImageConfiguration(context);
+  Size imageSize = getSize(image, configuration);
+  Rect rect = Rect.fromLTWH(x, y, imageSize.width, imageSize.height);
+  points.add(rect.topLeft);
+  setState(() {});
+}# goktasgui
 
 A new Flutter project.
 

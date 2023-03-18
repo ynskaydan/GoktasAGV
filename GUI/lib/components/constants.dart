@@ -87,12 +87,7 @@ Widget DataComponentContent({required String text}) {
   );
 }
 
-final points = [
-  Offset(10, 10),
-  Offset(20, 30),
-  Offset(50, 70),
-  Offset(80, 90),
-];
+final points = [];
 
 class MainButtons extends StatefulWidget {
   const MainButtons({super.key});
@@ -146,6 +141,22 @@ class _MainButtonsState extends State<MainButtons> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                ElevatedButton(
+                    onPressed: () {
+                      _startTheMapping();
+                    },
+                    child: Text("Kalibrasyon")),
+                SizedBox(
+                  width: 20,
+                ),
+                ElevatedButton(
+                    onPressed: () {
+                      _startTheMapping();
+                    },
+                    child: Text("Buton")),
+                SizedBox(
+                  width: 20,
+                ),
                 ElevatedButton(
                     onPressed: () {
                       _startTheMapping();

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:html';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:goktasgui/components/controller.dart';
 import 'package:universal_mqtt_client/universal_mqtt_client.dart';
@@ -9,25 +10,53 @@ import 'package:goktasgui/components/constants.dart';
 
 var mappingStateTopic = "mappingState";
 bool mappingState = true;
+var nodeId;
 
 class MyCustomPainter extends CustomPainter {
   final List<Offset> points;
+  final List<String> id;
 
-  MyCustomPainter(this.points);
+  MyCustomPainter(this.points, this.id);
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = Colors.black
       ..strokeWidth = 2;
-    //canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paint);
+
     final paint2 = Paint()..color = Colors.red;
+    final paint3 = Paint()..color = Colors.blue;
+    final paint4 = Paint()..color = Colors.green;
 
     for (var i = 0; i < points.length - 1; i++) {
       canvas.drawLine(points[i], points[i + 1], paint);
     }
-    for (final point in points) {
-      canvas.drawCircle(point, 5, paint2);
+    for (var i = 0; i < points.length; i++) {
+      var point = points[i];
+      var idString = id[i];
+      //canvas.drawCircle(point, 5, paint2);
+      switch (idString) {
+        case "S":
+          canvas.drawRect(Rect.fromCenter(center: point, width: 15, height: 15),
+              Paint()..color = Colors.black);
+          break;
+        case "Q3":
+          canvas.drawRect(Rect.fromCenter(center: point, width: 15, height: 15),
+              Paint()..color = Colors.red);
+          break;
+        case "Q4":
+          canvas.drawRect(Rect.fromCenter(center: point, width: 15, height: 15),
+              Paint()..color = Colors.blue);
+          break;
+        case "Q5":
+          canvas.drawRect(Rect.fromCenter(center: point, width: 15, height: 15),
+              Paint()..color = Colors.green);
+          break;
+        default:
+          canvas.drawRect(Rect.fromCenter(center: point, width: 15, height: 15),
+              Paint()..color = Colors.amber);
+          break;
+      }
     }
   }
 
@@ -51,6 +80,7 @@ class _MappingWidgetState extends State<MappingWidget> {
     autoReconnect: true,
   );
   List<Offset> points = [];
+  List<String> idList = [];
   @override
   void initState() {
     mapping();
@@ -61,16 +91,15 @@ class _MappingWidgetState extends State<MappingWidget> {
     await client.connect();
     final subscription =
         client.handleString('mapping', MqttQos.atLeastOnce).listen((message) {
-      //print(message);
-      //Map<String, dynamic> parsedJson = jsonDecode(message);
-      //print(parsedJson);
       List<double> xList = []; // x pozisyonları
       List<double> yList = []; // y pozsiyonları
+
       Map<String, dynamic> jsonMap = jsonDecode(message);
       List<dynamic> nodes =
           jsonMap['nodes']; //Json içindeki nodes array parse edilmesi
       for (dynamic node in nodes) {
-        String nodeId = node['id'];
+        nodeId = node['id'];
+        idList.add(nodeId);
         List<dynamic> pos = node[
             'pos']; // her bir node içindeki pozisyon değerlerinin parse edilmesi
         double x = pos[0]['x'];
@@ -78,15 +107,7 @@ class _MappingWidgetState extends State<MappingWidget> {
         xList.add(x);
         yList.add(y);
       }
-      /*
-      List<String> x = (parsedJson['nodes'] as Map<String, dynamic>)
-          .values
-          .map((e) => e['position']['x'].toString())
-          .toList();
-      List<String> y = (parsedJson['nodes'] as Map<String, dynamic>)
-          .values
-          .map((e) => e['position']['y'].toString())
-          .toList();*/
+
       setState(() {
         points.clear();
         for (int i = 0; i < xList.length; i++) {
@@ -101,12 +122,8 @@ class _MappingWidgetState extends State<MappingWidget> {
     return SizedBox(
       child: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [],
-          ),
           CustomPaint(
-            painter: MyCustomPainter(points),
+            painter: MyCustomPainter(points, idList),
           ),
         ],
       ),
