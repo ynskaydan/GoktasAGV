@@ -1,43 +1,76 @@
-import smbus2
+import smbus
 import time
 
-# Register addresses
-MPU9250_ADDRESS = 0x68
-MPU9250_PWR_MGMT_1 = 0x6B
-MPU9250_ACCEL_XOUT_H = 0x3B
-MPU9250_GYRO_XOUT_H = 0x43
+# Define the I2C bus to use (0 or 1)
+bus = smbus.SMBus(1)
 
-AK8963_ADDRESS = 0x0C
-AK8963_CNTL1 = 0x0A
-AK8963_HXL = 0x03
+# Define the address of the IMU sensor
+address = 0x68
 
-bus = smbus2.SMBus(1)  # Use i2c bus 1
+# Power on the IMU sensor
+bus.write_byte_data(address, 0x6B, 0)
 
-# Configure MPU9250
-bus.write_byte_data(MPU9250_ADDRESS, MPU9250_PWR_MGMT_1, 0x00)
 
+# Read the accelerometer data
+def read_accel():
+    # Read the raw accelerometer data
+    raw_accel_x = bus.read_word_data(address, 0x3B)
+    raw_accel_y = bus.read_word_data(address, 0x3D)
+    raw_accel_z = bus.read_word_data(address, 0x3F)
+
+    # Convert the raw data to G values
+    accel_x = raw_accel_x / 16384.0
+    accel_y = raw_accel_y / 16384.0
+    accel_z = raw_accel_z / 16384.0
+
+    # Return the G values as a tuple
+    return (accel_x, accel_y, accel_z)
+
+
+# Read the gyroscope data
+def read_gyro():
+    # Read the raw gyroscope data
+    raw_gyro_x = bus.read_word_data(address, 0x43)
+    raw_gyro_y = bus.read_word_data(address, 0x45)
+    raw_gyro_z = bus.read_word_data(address, 0x47)
+
+    # Convert the raw data to degrees per second
+    gyro_x = raw_gyro_x / 131.0
+    gyro_y = raw_gyro_y / 131.0
+    gyro_z = raw_gyro_z / 131.0
+
+    # Return the degrees per second as a tuple
+    return (gyro_x, gyro_y, gyro_z)
+
+
+# Read the magnetometer data
+def read_mag():
+    # Read the raw magnetometer data
+    raw_mag_x = bus.read_word_data(address, 0x03)
+    raw_mag_y = bus.read_word_data(address, 0x05)
+    raw_mag_z = bus.read_word_data(address, 0x07)
+
+    # Convert the raw data to microtesla
+    mag_x = raw_mag_x * 0.92
+    mag_y = raw_mag_y * 0.92
+    mag_z = raw_mag_z * 0.92
+
+    # Return the microtesla as a tuple
+    return (mag_x, mag_y, mag_z)
+
+
+# Continuously read and display the IMU data
 while True:
-    # Read accelerometer data
-    accel_x_h = bus.read_byte_data(MPU9250_ADDRESS, MPU9250_ACCEL_XOUT_H)
-    accel_x_l = bus.read_byte_data(MPU9250_ADDRESS, MPU9250_ACCEL_XOUT_H + 1)
-    accel_x = (accel_x_h << 8) | accel_x_l
-    accel_x = accel_x / 16384.0
+    try:
+        accel_data = read_accel()
+        gyro_data = read_gyro()
+        mag_data = read_mag()
 
-    # Read gyroscope data
-    gyro_x_h = bus.read_byte_data(MPU9250_ADDRESS, MPU9250_GYRO_XOUT_H)
-    gyro_x_l = bus.read_byte_data(MPU9250_ADDRESS, MPU9250_GYRO_XOUT_H + 1)
-    gyro_x = (gyro_x_h << 8) | gyro_x_l
-    gyro_x = gyro_x / 131.0
+        print("Accelerometer (G): X = {0:.2f}, Y = {1:.2f}, Z = {2:.2f}".format(*accel_data))
+        print("Gyroscope (deg/s): X = {0:.2f}, Y = {1:.2f}, Z = {2:.2f}".format(*gyro_data))
+        print("Magnetometer (uT): X = {0:.2f}, Y = {1:.2f}, Z = {2:.2f}".format(*mag_data))
+        print("------------------------------")
 
-    # Read magnetometer data
-    bus.write_byte_data(AK8963_ADDRESS, AK8963_CNTL1, 0x16)  # Enter continuous measurement mode
-    time.sleep(0.1)  # Wait for measurement to stabilize
-    mag_x_l = bus.read_byte_data(AK8963_ADDRESS, AK8963_HXL)
-    mag_x_h = bus.read_byte_data(AK8963_ADDRESS, AK8963_HXL + 1)
-    mag_x = (mag_x_h << 8) | mag_x_l
-
-    print("Accelerometer X: %.2f" % accel_x)
-    print("Gyroscope X: %.2f" % gyro_x)
-    print("Magnetometer X: %d" % mag_x)
-
-    time.sleep(0.1)  # Wait for next reading
+        # Wait for 0.5 seconds before reading again
+        time.sleep(0.5)
+    except KeyboardInterrupt:
