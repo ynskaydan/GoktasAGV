@@ -96,8 +96,9 @@ class _MappingWidgetState extends State<MappingWidget> {
     final subscription =
         client.handleString('mapping', MqttQos.atLeastOnce).listen((message) {
       List<double> xList = []; // x pozisyonları
+      List<double> yList = [];
       List<double> qrxList = [];
-
+      List<double> qryList = [];
 
       Map<String, dynamic> jsonMap = json.decode(message);
       List<dynamic> nodes =
@@ -116,17 +117,19 @@ class _MappingWidgetState extends State<MappingWidget> {
       for (var nodePos in nodePositions) {
         double x = nodePos['x'];
         double y = nodePos['y'];
+
+        print(x);
+        print(y);
         xList.add(x);
         yList.add(y);
       }
 
-
-            List<Map<String, dynamic>> qrPositions = qrs
-          .map((qrJson) => qrJson['pos'] as Map<String, dynamic>)
-          .toList();
-                for (var qrPos in qrPositions) {
+      List<Map<String, dynamic>> qrPositions =
+          qrs.map((qrJson) => qrJson['pos'] as Map<String, dynamic>).toList();
+      for (var qrPos in qrPositions) {
         double x = qrPos['x'];
         double y = qrPos['y'];
+
         qrxList.add(x);
         qryList.add(y);
       }
