@@ -8,6 +8,8 @@ import 'package:universal_mqtt_client/universal_mqtt_client.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:goktasgui/components/constants.dart';
 
+import '../entity/graph.dart';
+
 var mappingStateTopic = "mappingState";
 bool mappingState = true;
 var nodeId;
@@ -94,24 +96,39 @@ class _MappingWidgetState extends State<MappingWidget> {
     final subscription =
         client.handleString('mapping', MqttQos.atLeastOnce).listen((message) {
       List<double> xList = []; // x pozisyonları
-      List<double> yList = []; // y pozisyonları
-      List<String> idList = []; // id listesi
+      List<double> qrxList = [];
 
-      Map<String, dynamic> jsonMap = jsonDecode(message);
+
+      Map<String, dynamic> jsonMap = json.decode(message);
       List<dynamic> nodes =
           jsonMap['nodes']; //Json içindeki nodes array parse edilmesi
+      List<dynamic> qrs = jsonMap['qr'];
       for (var node in nodes) {
         nodeId = node['id'];
-        //nodeType = node['type'];
-        //typeList.add(nodeType);
+        nodeType = node['type'];
+        typeList.add(nodeType);
         idList.add(nodeId);
-        Map<String, dynamic> pos = node['pos'] ;
-        double x = pos['x'] as double;
-        double y = pos['y'] as double;
+      }
+
+      List<Map<String, dynamic>> nodePositions = nodes
+          .map((nodeJson) => nodeJson['pos'] as Map<String, dynamic>)
+          .toList();
+      for (var nodePos in nodePositions) {
+        double x = nodePos['x'];
+        double y = nodePos['y'];
         xList.add(x);
         yList.add(y);
-        print(x);
-        print(y);
+      }
+
+
+            List<Map<String, dynamic>> qrPositions = qrs
+          .map((qrJson) => qrJson['pos'] as Map<String, dynamic>)
+          .toList();
+                for (var qrPos in qrPositions) {
+        double x = qrPos['x'];
+        double y = qrPos['y'];
+        qrxList.add(x);
+        qryList.add(y);
       }
 
       setState(() {
