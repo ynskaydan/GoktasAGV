@@ -96,7 +96,9 @@ class _MappingWidgetState extends State<MappingWidget> {
     final subscription =
         client.handleString('mapping', MqttQos.atLeastOnce).listen((message) {
       List<double> xList = []; // x pozisyonları
+      List<double> yList = [];
       List<double> qrxList = [];
+      List<double> qryList = [];
 
 
       Map<String, dynamic> jsonMap = json.decode(message);
