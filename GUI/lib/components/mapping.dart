@@ -100,13 +100,14 @@ class _MappingWidgetState extends State<MappingWidget> {
       Map<String, dynamic> jsonMap = jsonDecode(message);
       List<dynamic> nodes =
           jsonMap['nodes']; //Json içindeki nodes array parse edilmesi
-      for (dynamic node in nodes) {
+      for (var node in nodes) {
         nodeId = node['id'];
+        //nodeType = node['type'];
+        //typeList.add(nodeType);
         idList.add(nodeId);
-        List<dynamic> pos = node[
-            'pos']; // her bir node içindeki pozisyon değerlerinin parse edilmesi
-        double x = pos[0]['x'];
-        double y = pos[0]['y'];
+        Map<String, dynamic> pos = node['pos'] ;
+        double x = pos['x'] as double;
+        double y = pos['y'] as double;
         xList.add(x);
         yList.add(y);
         print(x);
