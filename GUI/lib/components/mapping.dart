@@ -11,6 +11,7 @@ import 'package:goktasgui/components/constants.dart';
 var mappingStateTopic = "mappingState";
 bool mappingState = true;
 var nodeId;
+var nodeType;
 
 class MyCustomPainter extends CustomPainter {
   final List<Offset> points;
@@ -81,6 +82,7 @@ class _MappingWidgetState extends State<MappingWidget> {
   );
   List<Offset> points = [];
   List<String> idList = [];
+  List<String> typeList = [];
   @override
   void initState() {
     mapping();
@@ -92,7 +94,8 @@ class _MappingWidgetState extends State<MappingWidget> {
     final subscription =
         client.handleString('mapping', MqttQos.atLeastOnce).listen((message) {
       List<double> xList = []; // x pozisyonları
-      List<double> yList = []; // y pozsiyonları
+      List<double> yList = []; // y pozisyonları
+      List<String> idList = []; // id listesi
 
       Map<String, dynamic> jsonMap = jsonDecode(message);
       List<dynamic> nodes =
@@ -106,6 +109,8 @@ class _MappingWidgetState extends State<MappingWidget> {
         double y = pos[0]['y'];
         xList.add(x);
         yList.add(y);
+        print(x);
+        print(y);
       }
 
       setState(() {
