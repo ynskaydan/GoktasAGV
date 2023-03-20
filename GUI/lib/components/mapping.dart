@@ -101,16 +101,16 @@ class _MappingWidgetState extends State<MappingWidget> {
       List<double> qryList = [];
 
       Map<String, dynamic> jsonMap = json.decode(message);
-      List<dynamic> nodes =
-          jsonMap['nodes']; //Json içindeki nodes array parse edilmesi
-      List<dynamic> qrs = jsonMap['qr'];
-      for (var node in nodes) {
-        nodeId = node['id'];
-        nodeType = node['type'];
-        typeList.add(nodeType);
-        idList.add(nodeId);
+      List<Node> nodesx = (jsonMap['nodes'] as List).map((nodeJson) => Node.fromJson(nodeJson)).toList();
+      List<QR> qrsx = (jsonMap['qr'] as List).map((qrJson) => QR.fromJson(qrJson)).toList();
+      for(Node node in nodesx) {
+        double x = node.pos['x'] as double;
+        double y = node.pos['y'] as double;
+        print(x+y);
+    
       }
 
+<<<<<<< HEAD
       List<Map<String, dynamic>> nodePositions = nodes
           .map((nodeJson) => nodeJson['pos'] as Map<String, dynamic>)
           .toList();
@@ -133,6 +133,42 @@ class _MappingWidgetState extends State<MappingWidget> {
         qrxList.add(x);
         qryList.add(y);
       }
+=======
+
+
+
+
+      // List<dynamic> nodes =
+      //     jsonMap['nodes']; //Json içindeki nodes array parse edilmesi
+      // List<dynamic> qrs = jsonMap['qr'];
+      // for (var node in nodes) {
+      //   //nodeId = node['id'];
+      //   //nodeType = node['type'];
+      //   //typeList.add(nodeType);
+      //   //idList.add(nodeId);
+      // }
+
+      // List<Map<String, dynamic>> nodePositions = nodes
+      //     .map((nodeJson) => nodeJson['pos'] as Map<String, dynamic>)
+      //     .toList();
+      // for (var nodePos in nodePositions) {
+      //   double x = nodePos['x'];
+      //   double y = nodePos['y'];
+      //   xList.add(x);
+      //   yList.add(y);
+      // }
+      // print(xList);
+      // print(yList);
+
+      // List<Map<String, dynamic>> qrPositions =
+      //     qrs.map((qrJson) => qrJson['pos'] as Map<String, dynamic>).toList();
+      // for (var qrPos in qrPositions) {
+      //   double x = qrPos['x'];
+      //   double y = qrPos['y'];
+      //   qrxList.add(x);
+      //   qryList.add(y);
+      // }
+>>>>>>> main
 
       setState(() {
         points.clear();
