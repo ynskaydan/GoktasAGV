@@ -46,8 +46,8 @@ def main():
         posy = corner[1]
         direction = corner[2]
         unvisited_directions = corner[3]
-
-        new_node = g.add_node(g.num_of_nodes, posx, posy, corner_type, unvisited_directions)
+        id = str(g.num_of_nodes)
+        new_node = g.add_node(id, posx, posy, corner_type, unvisited_directions)
         weight = int(new_node.get_pos_x() - past_node.get_pos_x()) + int(
             new_node.get_pos_y() - past_node.get_pos_y())
         g.add_edge(past_node, new_node, weight)

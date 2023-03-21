@@ -3,6 +3,7 @@ import 'dart:html';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:goktasgui/components/constants.dart';
 import 'package:goktasgui/components/controller.dart';
 import 'package:universal_mqtt_client/universal_mqtt_client.dart';
 import 'package:mqtt_client/mqtt_client.dart';
@@ -14,12 +15,15 @@ var mappingStateTopic = "mappingState";
 bool mappingState = true;
 var nodeId;
 var nodeType;
+var adj;
 
 class MyCustomPainter extends CustomPainter {
-  final List<Offset> points;
-  final List<String> id;
-
-  MyCustomPainter(this.points, this.id);
+  //final List<Offset> points;
+  final List<String> type;
+  //final List<dynamic> adjList;
+  //final List<String> idList;
+  final List<Node> testNode;
+  MyCustomPainter(this.testNode, this.type);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -31,23 +35,39 @@ class MyCustomPainter extends CustomPainter {
     final paint3 = Paint()..color = Colors.blue;
     final paint4 = Paint()..color = Colors.green;
 
-    for (var i = 0; i < points.length - 1; i++) {
-      canvas.drawLine(points[i], points[i + 1], paint);
+    /*   for (var i = 0; i < adjList.length; i++) {
+      for (var m = 0; m < points.length - 1; m++)
+        if (adjList[i] == idList[m])
+          canvas.drawLine(points[i], points[m], paint);
     }
+     */
+    final List<dynamic> nodes = testNode;
+    nodes.forEach((node) {
+      Offset startPosition = node.position;
+
+      node.adjacentNodeIds.forEach((adjacentNodeId) {
+        Node adjacentNode = nodes.firstWhere((n) => n.id == adjacentNodeId);
+
+        Offset endPosition = adjacentNode.pos as Offset;
+
+        canvas.drawLine(startPosition, endPosition, paint);
+      });
+    });
+
     for (var i = 0; i < points.length; i++) {
       var point = points[i];
-      var idString = id[i];
+      var typeInput = type[i];
       //canvas.drawCircle(point, 5, paint2);
-      switch (idString) {
+      switch (typeInput) {
         case "S":
           canvas.drawRect(Rect.fromCenter(center: point, width: 15, height: 15),
               Paint()..color = Colors.black);
           break;
-        case "Q3":
+        case "T":
           canvas.drawRect(Rect.fromCenter(center: point, width: 15, height: 15),
               Paint()..color = Colors.red);
           break;
-        case "Q4":
+        case "DOWN_L2":
           canvas.drawRect(Rect.fromCenter(center: point, width: 15, height: 15),
               Paint()..color = Colors.blue);
           break;
@@ -85,6 +105,7 @@ class _MappingWidgetState extends State<MappingWidget> {
   List<Offset> points = [];
   List<String> idList = [];
   List<String> typeList = [];
+  List<dynamic> adjList = [];
   @override
   void initState() {
     mapping();
@@ -95,100 +116,68 @@ class _MappingWidgetState extends State<MappingWidget> {
     await client.connect();
     final subscription =
         client.handleString('mapping', MqttQos.atLeastOnce).listen((message) {
+      Graph graph = Graph.fromJson(jsonDecode(message));
+      List<dynamic> nodes = graph.nodes;
+      List<dynamic> qrs = graph.qr;
+
       List<double> xList = []; // x pozisyonları
       List<double> yList = [];
+
       List<double> qrxList = [];
       List<double> qryList = [];
 
       Map<String, dynamic> jsonMap = json.decode(message);
-      List<Node> nodesx = (jsonMap['nodes'] as List).map((nodeJson) => Node.fromJson(nodeJson)).toList();
-      List<QR> qrsx = (jsonMap['qr'] as List).map((qrJson) => QR.fromJson(qrJson)).toList();
-      for(Node node in nodesx) {
-        double x = node.pos['x'] as double;
-        double y = node.pos['y'] as double;
-        print(x+y);
-    
+
+      for (var node in nodes) {
+        nodeId = node['id'];
+        nodeType = node['type'];
+        adj = node['adjacents'];
+
+        adjList.add(adj);
+        typeList.add(nodeType);
+        idList.add(nodeId);
       }
-
-<<<<<<< HEAD
-      List<Map<String, dynamic>> nodePositions = nodes
-          .map((nodeJson) => nodeJson['pos'] as Map<String, dynamic>)
-          .toList();
-      for (var nodePos in nodePositions) {
-        double x = nodePos['x'];
-        double y = nodePos['y'];
-
-        print(x);
-        print(y);
-        xList.add(x);
-        yList.add(y);
+      for (var i = 0; i < adjList.length; i++) {
+        print(adjList[i]);
       }
-
-      List<Map<String, dynamic>> qrPositions =
-          qrs.map((qrJson) => qrJson['pos'] as Map<String, dynamic>).toList();
-      for (var qrPos in qrPositions) {
-        double x = qrPos['x'];
-        double y = qrPos['y'];
-
-        qrxList.add(x);
-        qryList.add(y);
-      }
-=======
-
-
-
-
-      // List<dynamic> nodes =
-      //     jsonMap['nodes']; //Json içindeki nodes array parse edilmesi
-      // List<dynamic> qrs = jsonMap['qr'];
-      // for (var node in nodes) {
-      //   //nodeId = node['id'];
-      //   //nodeType = node['type'];
-      //   //typeList.add(nodeType);
-      //   //idList.add(nodeId);
-      // }
-
       // List<Map<String, dynamic>> nodePositions = nodes
       //     .map((nodeJson) => nodeJson['pos'] as Map<String, dynamic>)
       //     .toList();
       // for (var nodePos in nodePositions) {
       //   double x = nodePos['x'];
       //   double y = nodePos['y'];
-      //   xList.add(x);
-      //   yList.add(y);
-      // }
-      // print(xList);
-      // print(yList);
+
+      // xList.add(x);
+      // yList.add(y);
 
       // List<Map<String, dynamic>> qrPositions =
       //     qrs.map((qrJson) => qrJson['pos'] as Map<String, dynamic>).toList();
       // for (var qrPos in qrPositions) {
       //   double x = qrPos['x'];
       //   double y = qrPos['y'];
-      //   qrxList.add(x);
-      //   qryList.add(y);
-      // }
->>>>>>> main
 
-      setState(() {
-        points.clear();
-        for (int i = 0; i < xList.length; i++) {
-          points.add(Offset(xList[i], yList[i]));
-        }
-      });
+      // qrxList.add(x);
+      // qryList.add(y);
+    });
+
+    setState(() {
+      points.clear();
+      // for (int i = 0; i < xList.length; i++) {
+      //   points.add(Offset(xList[i], yList[i]));
+      // }
     });
   }
+}
 
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      child: Column(
-        children: [
-          CustomPaint(
-            painter: MyCustomPainter(points, idList),
-          ),
-        ],
-      ),
-    );
-  }
+@override
+Widget build(BuildContext context) {
+  return SizedBox(
+    child: Column(
+      children: [
+        CustomPaint(
+          painter: MyCustomPainter(asd, idList),
+        ),
+      ],
+    ),
+  );
 }

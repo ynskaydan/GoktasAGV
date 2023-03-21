@@ -2,10 +2,11 @@ import cv2
 import datetime
 from CrossCuttingConcerns.mqtt import connect_mqtt, send_data
 
-
+topic = "qr"
+time_old = datetime.datetime.now()
 def main():
-    topic = "qr"
-    time_old = datetime.datetime.now()
+    print("QR Okuma başladı!")
+
     olddata = ""
     client = connect_mqtt()
     # set up camera objects
@@ -41,13 +42,12 @@ def main():
 
 
 def publish(client, message, oldmessage):
+    global topic, time_old
     global time_old
     time_now = datetime.datetime.now()
-    resultx = message + " on time: " + \
-              str(datetime.datetime.now().minute) + ":" + \
-              str(datetime.datetime.now().second)
+    resultx = message
     if (oldmessage != message):
-        send_data(client, resultx)
+        send_data(client, resultx, topic)
         time_old = time_now
     else:
         if ((time_now.second - time_old.second) % 60 >= 10):
