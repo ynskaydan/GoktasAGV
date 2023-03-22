@@ -1,12 +1,12 @@
 import cv2
 import datetime
 from CrossCuttingConcerns.mqtt import connect_mqtt, send_data
+import os
 
 topic = "qr"
 time_old = datetime.datetime.now()
 def main():
-    print("QR Okuma başladı!")
-
+    print("Qr started! parent id:",os.getppid()," self id:",os.getpid())
     olddata = ""
     client = connect_mqtt()
     # set up camera objects
