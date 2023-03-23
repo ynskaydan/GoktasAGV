@@ -125,6 +125,7 @@ class _MappingWidgetState extends State<MappingWidget> {
 
       List<double> qrxList = [];
       List<double> qryList = [];
+      Graph graph = Graph.fromJson(jsonDecode(message));
 
       Map<String, dynamic> jsonMap = json.decode(message);
 

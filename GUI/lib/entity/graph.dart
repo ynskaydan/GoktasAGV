@@ -55,3 +55,16 @@ class Graph {
     );
   }
 }
+
+  Graph({
+    required this.nodes,
+    required this.qr,
+  });
+
+  factory Graph.fromJson(Map<String, dynamic> json) {
+    return Graph(
+      nodes: List<Node>.from(json['nodes'].map((x) => Node.fromJson(x))),
+      qr: List<QR>.from(json['qr'].map((x) => QR.fromJson(x))),
+    );
+  }
+}
