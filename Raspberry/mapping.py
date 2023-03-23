@@ -2,12 +2,14 @@ import json
 from CrossCuttingConcerns.mqtt import connect_mqtt, send_data, broker
 from CrossCuttingConcerns.sub_mqtt import mqtt_sub
 from Graph import Graph
+import os
 
 direction = "E"
 
 
 def main():
     global direction
+    print("Mapping started! parent id:",os.getppid()," self id:",os.getpid())
     g = Graph()
     pub_topic = "mapping"
     sub_corner_topic = "corner"
