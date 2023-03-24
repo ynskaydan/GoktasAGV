@@ -13,26 +13,11 @@ sub_mode_topic = "mode"
 sub_topics = [sub_mode_topic]
 mode = ""
 
-<<<<<<< HEAD
-
-heartbeat_thread = threading.Thread(heartbeat.send_heartbeat())
-qr_thread = threading.Thread(readingQR.main()) # Collecting all functions to thread
-mapping_thread = threading.Thread(mapping.main())
-obstacle_thread = threading.Thread(obstacle_detection.main())
-
-qr_thread.start() # Starting global threads
-qr_thread.join()
-heartbeat_thread.start()
-heartbeat_thread.join()
-obstacle_thread.start()
-obstacle_thread.join()
 
 
  # Waiting to stop threads
 
 
-=======
->>>>>>> main
 
 def callback_for_mode(client, userdata, msg):
     global mode
@@ -48,18 +33,9 @@ def callback_for_mode(client, userdata, msg):
         mode_functions[message]()
 
 
-
-
-
 def run_explore_mode():
     print("Mapping active")
     try:
-<<<<<<< HEAD
-        mapping_thread.start()
-        mapping_thread.join()
-    except:
-        print("mapping is stopped")
-=======
         process_mapping.start()
     except AssertionError:
         print("Cannot start a process twitce")
@@ -67,9 +43,6 @@ def run_explore_mode():
 def run_duty_mode():
     print("Duty active")
     process_mapping.terminate()
-
->>>>>>> main
-
 
 def run_import_mode():
     try:
@@ -98,9 +71,6 @@ def main():
     process_heartbit.start()
     # process_obstacle.start()
     process_qr.start()
-
-    print("ID of process heartbit: {}".format(process_heartbit.pid))
-    print("ID of process qr: {}".format(process_qr.pid))
 
     client = connect_mqtt()
 

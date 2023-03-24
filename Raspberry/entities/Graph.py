@@ -1,5 +1,6 @@
-from Node import Node
-from qr import QR
+from entities.Node import Node
+from entities.obstacle import Obstacle
+from entities.qr import QR
 
 
 class Graph:
@@ -9,6 +10,7 @@ class Graph:
         self.obstacles = {}
         self.edges = 0
         self.num_of_nodes = 0
+        self.num_of_obstacle = 0
         self.num_of_qr = 0
 
     def add_node(self, id, posx, posy, type, unvisited):
@@ -27,8 +29,14 @@ class Graph:
             print(f"QR {id} has already in list")
             return 0
 
-    def add_obstacle(self, id):
-        self.obstacles[id] = "BLOCK"
+    def add_obstacle(self, id, posx, posy):
+        self.num_of_obstacle += 1
+        new_obstacle = Obstacle(id, posx, posy)
+        self.obstacles[id] = new_obstacle
+        return new_obstacle
+
+    def get_obstacle(self, id):
+        return self.obstacles[id]
 
     def get_qr(self, id):
         return self.qr_list[id]
@@ -50,3 +58,6 @@ class Graph:
 
     def get_qr_list(self):
         return self.qr_list.keys()
+
+    def get_obstacles(self):
+        return self.obstacles.keys()

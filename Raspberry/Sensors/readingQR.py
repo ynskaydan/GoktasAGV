@@ -5,13 +5,11 @@ import os
 
 topic = "qr"
 time_old = datetime.datetime.now()
-def main():
-<<<<<<< HEAD
-    print("QR Okuma başladı!")
 
-=======
-    print("Qr started! parent id:",os.getppid()," self id:",os.getpid())
->>>>>>> main
+
+def main():
+    print("Qr started! parent id:", os.getppid(), " self id:", os.getpid())
+
     olddata = ""
     client = connect_mqtt()
     # set up camera objects

@@ -1,7 +1,7 @@
 import json
 from CrossCuttingConcerns.mqtt import connect_mqtt, send_data, broker
 from CrossCuttingConcerns.sub_mqtt import mqtt_sub
-from Graph import Graph
+from entities.Graph import Graph
 import os
 
 direction = "E"
@@ -13,8 +13,9 @@ def main():
     g = Graph()
     pub_topic = "mapping"
     sub_corner_topic = "corner"
+    sub_obstacle_topic = "obstacle"
     sub_qr_topic = "qr"
-    sub_topics = [sub_qr_topic, sub_corner_topic]
+    sub_topics = [sub_qr_topic, sub_corner_topic,sub_obstacle_topic]
     send_client = connect_mqtt()
 
     old_posx = 0
@@ -23,6 +24,16 @@ def main():
     start_node_type = "Start"
     unvisited = {}
     g.add_node(old_value, old_posx, old_posy, start_node_type, unvisited)
+
+
+    def callback_for_obstacle(client,userdata,msg):
+        message = msg.payload.decode('utf-8')
+        id = str(g.num_of_obstacle)
+        nodes = list(g.get_nodes())
+        node_id = nodes[len(nodes) - 1]  # Listedeki en son node çağırmak
+        last_node = g.get_node(node_id)
+        result = g.add_obstacle(id,last_node.get_pos_x(),80)
+
 
     def callback_for_qr(client, userdata, msg):
         message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
@@ -105,13 +116,14 @@ def main():
 
         return posx, posy, new_direction, unvisited_directions
 
-    callback_methods = [callback_for_qr, callback_for_corner]
+    callback_methods = [callback_for_qr, callback_for_corner,callback_for_obstacle]
     mqtt_sub(broker, sub_topics, callback_methods)
 
 
 def convert_json(graph):
     nodes = []
     qr_list = []
+    obstacles = []
     for node_id in graph.nodes:
         node = graph.get_node(node_id)
         list_adjacents = []
@@ -133,7 +145,11 @@ def convert_json(graph):
         qr = graph.get_qr(qr_id)
         qr_list.append({"id": qr.get_id(), "pos": {"x": qr.get_pos_x(), "y": qr.get_pos_y()}})
 
-    graphs = {"nodes": nodes, "qr": qr_list}
+    for obstacle_id in graph.obstacles:
+        obstacle = graph.get_obstacle(obstacle_id)
+        obstacles.append({"id": obstacle.get_id(),"pos": {"x": obstacle.get_posx(), "y": obstacle.get_posy()}})
+
+    graphs = {"nodes": nodes, "qr": qr_list, "obstacles": obstacles}
 
     converted_json = json.dumps(graphs)
     return converted_json
