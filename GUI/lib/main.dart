@@ -113,7 +113,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               contentData: EmergencyStop(),
                               subTitle: "Acil Durdurma Butonu",
                               widthSize:
-                                  MediaQuery.of(context).size.width / 3 + 20,
+                                  MediaQuery.of(context).size.width / 4 + 20,
                               heightSize:
                                   MediaQuery.of(context).size.height / 6,
                             ),
@@ -124,14 +124,14 @@ class _MyHomePageState extends State<MyHomePage> {
                             DataComponent(
                               contentData: DataComponentContent(text: "2 m/s"),
                               subTitle: "Hız",
-                              widthSize: MediaQuery.of(context).size.width / 6,
+                              widthSize: MediaQuery.of(context).size.width / 8,
                               heightSize:
                                   MediaQuery.of(context).size.height / 6,
                             ),
                             DataComponent(
                               contentData: DataComponentContent(text: "%87"),
                               subTitle: "Batarya",
-                              widthSize: MediaQuery.of(context).size.width / 6,
+                              widthSize: MediaQuery.of(context).size.width / 8,
                               heightSize:
                                   MediaQuery.of(context).size.height / 6,
                             ),
@@ -143,7 +143,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               subTitle: "Manuel Kontrol",
                               contentData: const Controller(),
                               widthSize:
-                                  MediaQuery.of(context).size.width / 3 + 20,
+                                  MediaQuery.of(context).size.width / 4 + 20,
                               heightSize:
                                   MediaQuery.of(context).size.height / 6,
                             ),
@@ -157,7 +157,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 contentData:
                                     DataComponentContent(text: _timeString),
                                 widthSize:
-                                    MediaQuery.of(context).size.width / 6,
+                                    MediaQuery.of(context).size.width / 8,
                                 heightSize:
                                     MediaQuery.of(context).size.height / 6,
                               ),
@@ -166,7 +166,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 contentData: DataComponentContent(
                                     text: "Araç İstirahatte"),
                                 widthSize:
-                                    MediaQuery.of(context).size.width / 6,
+                                    MediaQuery.of(context).size.width / 8,
                                 heightSize:
                                     MediaQuery.of(context).size.height / 6,
                               ),
@@ -183,13 +183,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     DataComponent(
                       subTitle: "Harita",
                       contentData: MappingWidget(),
-                      widthSize: MediaQuery.of(context).size.width / 3,
+                      widthSize: MediaQuery.of(context).size.width / 2.4,
                       heightSize: MediaQuery.of(context).size.height / 2 + 40,
                     ),
                     DataComponent(
                       subTitle: "Senaryo",
                       contentData: EntrySenario(),
-                      widthSize: MediaQuery.of(context).size.width / 3,
+                      widthSize: MediaQuery.of(context).size.width / 2.4,
                       heightSize: MediaQuery.of(context).size.height / 6,
                     ),
                   ],
