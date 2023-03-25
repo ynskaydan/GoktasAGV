@@ -4,19 +4,12 @@ import mapping
 import time
 from CrossCuttingConcerns.mqtt import connect_mqtt, broker
 from CrossCuttingConcerns.sub_mqtt import mqtt_sub
-
 import multiprocessing
-
 from Sensors import readingQR, obstacle_detection
 
 sub_mode_topic = "mode"
 sub_topics = [sub_mode_topic]
 mode = ""
-
-
-
- # Waiting to stop threads
-
 
 
 def callback_for_mode(client, userdata, msg):
@@ -40,9 +33,11 @@ def run_explore_mode():
     except AssertionError:
         print("Cannot start a process twitce")
 
+
 def run_duty_mode():
     print("Duty active")
     process_mapping.terminate()
+
 
 def run_import_mode():
     try:

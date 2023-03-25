@@ -6,16 +6,20 @@ import os
 
 direction = "E"
 
+db_nodes = open("./Database/node_list.txt", "a")
+db_qr = open("./Database/qr_list.txt", "a")
+db_obstacle = open("./Database/obstacle_list.txt", "a")
+
 
 def main():
     global direction
-    print("Mapping started! parent id:",os.getppid()," self id:",os.getpid())
+    print("Mapping started! parent id:", os.getppid(), " self id:", os.getpid())
     g = Graph()
     pub_topic = "mapping"
     sub_corner_topic = "corner"
     sub_obstacle_topic = "obstacle"
     sub_qr_topic = "qr"
-    sub_topics = [sub_qr_topic, sub_corner_topic,sub_obstacle_topic]
+    sub_topics = [sub_qr_topic, sub_corner_topic, sub_obstacle_topic]
     send_client = connect_mqtt()
 
     old_posx = 0
@@ -25,15 +29,17 @@ def main():
     unvisited = {}
     g.add_node(old_value, old_posx, old_posy, start_node_type, unvisited)
 
-
-    def callback_for_obstacle(client,userdata,msg):
+    def callback_for_obstacle(client, userdata, msg):
         message = msg.payload.decode('utf-8')
+
         id = str(g.num_of_obstacle)
         nodes = list(g.get_nodes())
         node_id = nodes[len(nodes) - 1]  # Listedeki en son node çağırmak
         last_node = g.get_node(node_id)
-        result = g.add_obstacle(id,last_node.get_pos_x(),80)
-
+        result = g.add_obstacle(id, last_node.get_pos_x(), 80)
+        db_obstacle.write(
+            "\n" + str({"id": result.get_id(), "pos": {"x": result.get_posx(), "y": result.get_posy()}}) + "\n")
+        print("new obstacle added!")
 
     def callback_for_qr(client, userdata, msg):
         message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
@@ -41,6 +47,9 @@ def main():
         result = g.add_qr(parts[0], parts[1], parts[2])
         if result == 0:
             send_data(client, "QR is already in list", sub_qr_topic)
+        db_qr.write(
+            "\n" + str({"id": result.get_id(), "pos": {"x": result.get_pos_x(), "y": result.get_pos_y()}}) + "\n")
+        print("new qr added!")
 
     def callback_for_corner(client, userdata, msg):
         global direction
@@ -59,12 +68,21 @@ def main():
         posy = corner[1]
         direction = corner[2]
         unvisited_directions = corner[3]
+
         id = str(g.num_of_nodes)
         new_node = g.add_node(id, posx, posy, corner_type, unvisited_directions)
         weight = int(new_node.get_pos_x() - past_node.get_pos_x()) + int(
             new_node.get_pos_y() - past_node.get_pos_y())
-        g.add_edge(past_node, new_node, weight)
 
+        list_adjacents = []
+        g.add_edge(past_node, new_node, weight)
+        for adjacent in new_node.get_connections():
+            list_adjacents.append(adjacent.get_id())
+
+        db_nodes.write(str({"id": new_node.get_id(), "pos": {"x": new_node.get_pos_x(), "y": new_node.get_pos_y()},
+                            "type": new_node.get_type(), "adjacents": list_adjacents,
+                            "unvisitedDirections": new_node.get_unvisited_directions()}) + "\n")
+        print("new node added!")
         send_data(send_client, convert_json(g), pub_topic)  # Node değerlerini mqtt'ye göndermek
 
     def get_corner_data(corner_type, qr):
@@ -116,7 +134,7 @@ def main():
 
         return posx, posy, new_direction, unvisited_directions
 
-    callback_methods = [callback_for_qr, callback_for_corner,callback_for_obstacle]
+    callback_methods = [callback_for_qr, callback_for_corner, callback_for_obstacle]
     mqtt_sub(broker, sub_topics, callback_methods)
 
 
@@ -134,12 +152,12 @@ def convert_json(graph):
         unvisited_directions = node.get_unvisited_directions()
         for un_visited in unvisited_directions:
             list_unvisited_directions.append(un_visited)
-            for adjacent in adjacents:
-                list_adjacents.append(adjacent.get_id())
+        for adjacent in adjacents:
+            list_adjacents.append(adjacent.get_id())
 
         nodes.append(
             {"id": node.get_id(), "pos": {"x": x, "y": y}, "type": node.get_type(), "adjacents": list_adjacents,
-                "unvisitedDirections": list_unvisited_directions})
+             "unvisitedDirections": list_unvisited_directions})
 
     for qr_id in graph.qr_list:
         qr = graph.get_qr(qr_id)
@@ -147,11 +165,9 @@ def convert_json(graph):
 
     for obstacle_id in graph.obstacles:
         obstacle = graph.get_obstacle(obstacle_id)
-        obstacles.append({"id": obstacle.get_id(),"pos": {"x": obstacle.get_posx(), "y": obstacle.get_posy()}})
+        obstacles.append({"id": obstacle.get_id(), "pos": {"x": obstacle.get_posx(), "y": obstacle.get_posy()}})
 
     graphs = {"nodes": nodes, "qr": qr_list, "obstacles": obstacles}
 
     converted_json = json.dumps(graphs)
     return converted_json
-
-
