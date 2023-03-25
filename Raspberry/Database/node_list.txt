@@ -1,4 +1,0 @@
-{'id': 'S', 'pos': {'x': 0, 'y': 0}, 'type': 'Start', 'adjacents': ["1"], 'unvisitedDirections': []}
-{'id': '1', 'pos': {'x': 20, 'y': 0}, 'type': 'RIGHT_L', 'adjacents': ['S'], 'unvisitedDirections': []}
-{'id': '2', 'pos': {'x': 20, 'y': 90}, 'type': 'LEFT_L', 'adjacents': ['1'], 'unvisitedDirections': []}
-{'id': '3', 'pos': {'x': -10, 'y': 100}, 'type': 'T', 'adjacents': ['2'], 'unvisitedDirections': ['S']}

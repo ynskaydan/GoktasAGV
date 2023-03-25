@@ -31,6 +31,10 @@ class Graph:
 
     def add_obstacle(self, id, posx, posy):
         self.num_of_obstacle += 1
+        for obstacle_id in self.get_obstacles():
+            obstacle = self.get_obstacle(obstacle_id)
+            if posx == obstacle.get_posx():
+                return 0
         new_obstacle = Obstacle(id, posx, posy)
         self.obstacles[id] = new_obstacle
         return new_obstacle
@@ -51,7 +55,10 @@ class Graph:
         return weight
 
     def get_node(self, id):
-        return self.nodes[id]
+        if id in self.get_nodes():
+            return self.nodes[id]
+        else:
+            return 0
 
     def get_nodes(self):
         return self.nodes.keys()

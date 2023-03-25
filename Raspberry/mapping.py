@@ -6,40 +6,44 @@ import os
 
 direction = "E"
 
-db_nodes = open("./Database/node_list.txt", "a")
-db_qr = open("./Database/qr_list.txt", "a")
-db_obstacle = open("./Database/obstacle_list.txt", "a")
-
+db_graph_a = open("./Database/db_graph.txt", "a")
+db_graph_r = open("./Database/db_graph.txt", "r")
+pub_topic = "mapping"
+sub_corner_topic = "corner"
+sub_obstacle_topic = "obstacle"
+sub_qr_topic = "qr"
+sub_topics = [sub_qr_topic, sub_corner_topic, sub_obstacle_topic]
+send_client = connect_mqtt()
 
 def main():
     global direction
     print("Mapping started! parent id:", os.getppid(), " self id:", os.getpid())
-    g = Graph()
-    pub_topic = "mapping"
-    sub_corner_topic = "corner"
-    sub_obstacle_topic = "obstacle"
-    sub_qr_topic = "qr"
-    sub_topics = [sub_qr_topic, sub_corner_topic, sub_obstacle_topic]
-    send_client = connect_mqtt()
 
-    old_posx = 0
-    old_posy = 0
-    old_value = "S"
-    start_node_type = "Start"
-    unvisited = {}
-    g.add_node(old_value, old_posx, old_posy, start_node_type, unvisited)
+    def setup_mapping():
+        global g
+        g = Graph()
+        result = read_database(g)
+        if not result:
+            g.add_node("S", 0, 0, "Start", {})
+        if result:
+            print("Past data write on graph object")
+
+
+    setup_mapping()
 
     def callback_for_obstacle(client, userdata, msg):
         message = msg.payload.decode('utf-8')
-
-        id = str(g.num_of_obstacle)
+        obs_id = str(g.num_of_obstacle)
         nodes = list(g.get_nodes())
         node_id = nodes[len(nodes) - 1]  # Listedeki en son node çağırmak
         last_node = g.get_node(node_id)
-        result = g.add_obstacle(id, last_node.get_pos_x(), 80)
-        db_obstacle.write(
-            "\n" + str({"id": result.get_id(), "pos": {"x": result.get_posx(), "y": result.get_posy()}}) + "\n")
-        print("new obstacle added!")
+        result = g.add_obstacle(obs_id, last_node.get_pos_x(), 80)
+        if result == 0:
+            print("Obstacle already in list")
+        else:
+            json_graph = convert_json(g)
+            db_graph_a.write(json_graph + "\n")
+            send_data(send_client, json_graph, pub_topic)  # Node değerlerini mqtt'ye göndermek
 
     def callback_for_qr(client, userdata, msg):
         message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
@@ -47,9 +51,11 @@ def main():
         result = g.add_qr(parts[0], parts[1], parts[2])
         if result == 0:
             send_data(client, "QR is already in list", sub_qr_topic)
-        db_qr.write(
-            "\n" + str({"id": result.get_id(), "pos": {"x": result.get_pos_x(), "y": result.get_pos_y()}}) + "\n")
-        print("new qr added!")
+        else:
+            json_graph = convert_json(g)
+            db_graph_a.write(json_graph+ "\n")
+            send_data(send_client, json_graph, pub_topic)  # Node değerlerini mqtt'ye göndermek
+
 
     def callback_for_corner(client, userdata, msg):
         global direction
@@ -69,21 +75,15 @@ def main():
         direction = corner[2]
         unvisited_directions = corner[3]
 
-        id = str(g.num_of_nodes)
-        new_node = g.add_node(id, posx, posy, corner_type, unvisited_directions)
+        node_id = str(g.num_of_nodes)
+        new_node = g.add_node(node_id, posx, posy, corner_type, unvisited_directions)
         weight = int(new_node.get_pos_x() - past_node.get_pos_x()) + int(
             new_node.get_pos_y() - past_node.get_pos_y())
 
-        list_adjacents = []
         g.add_edge(past_node, new_node, weight)
-        for adjacent in new_node.get_connections():
-            list_adjacents.append(adjacent.get_id())
-
-        db_nodes.write(str({"id": new_node.get_id(), "pos": {"x": new_node.get_pos_x(), "y": new_node.get_pos_y()},
-                            "type": new_node.get_type(), "adjacents": list_adjacents,
-                            "unvisitedDirections": new_node.get_unvisited_directions()}) + "\n")
-        print("new node added!")
-        send_data(send_client, convert_json(g), pub_topic)  # Node değerlerini mqtt'ye göndermek
+        json_graph = convert_json(g)
+        db_graph_a.write(json_graph+ "\n")
+        send_data(send_client, json_graph, pub_topic)  # Node değerlerini mqtt'ye göndermek
 
     def get_corner_data(corner_type, qr):
         global direction
@@ -146,9 +146,11 @@ def convert_json(graph):
         node = graph.get_node(node_id)
         list_adjacents = []
         list_unvisited_directions = []
+
         x = node.get_pos_x()
         y = node.get_pos_y()
         adjacents = node.get_connections()
+
         unvisited_directions = node.get_unvisited_directions()
         for un_visited in unvisited_directions:
             list_unvisited_directions.append(un_visited)
@@ -171,3 +173,44 @@ def convert_json(graph):
 
     converted_json = json.dumps(graphs)
     return converted_json
+
+
+def read_database(graph):
+    lines = db_graph_r.readlines()
+    if len(lines) == 0:
+        return False
+    else:
+        json_graph = lines[len(lines)-1]
+        data = json.loads(json_graph)
+
+        nodes = data['nodes']
+        qr_codes = data['qr']
+        obstacles = data['obstacles']
+
+        for node_data in nodes:
+            node_id = node_data['id']
+            pos_x = node_data['pos']['x']
+            pos_y = node_data['pos']['y']
+            type = node_data['type']
+            adjacents = node_data['adjacents']
+            unvisited_directions = node_data['unvisitedDirections']
+            node = graph.add_node(node_id, pos_x, pos_y, type, unvisited_directions)
+            if len(adjacents) > 0:
+                for adjacent_id in adjacents:
+                    adjacent = graph.get_node(adjacent_id)
+                    if adjacent == 0:
+                        continue
+                    weigth = (pos_x - adjacent.get_pos_x()) + (pos_y - adjacent.get_pos_y())
+                    graph.add_edge(node, adjacent, weigth)
+        for qr_code in qr_codes:
+            qr_id = qr_code['id']
+            pos_x = qr_code['pos']['x']
+            pos_y = qr_code['pos']['y']
+            graph.add_qr(qr_id, pos_x, pos_y)
+
+        for obstacle in obstacles:
+            obs_id = obstacle['id']
+            pos_x = obstacle['pos']['x']
+            pos_y = obstacle['pos']['y']
+            graph.add_obstacle(obs_id, pos_x, pos_y)
+        return True
