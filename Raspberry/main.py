@@ -2,6 +2,8 @@ import heartbeat
 import os
 import mapping
 import time
+
+from CrossCuttingConcerns import configure_ip
 from CrossCuttingConcerns.mqtt import connect_mqtt, broker
 from CrossCuttingConcerns.sub_mqtt import mqtt_sub
 import multiprocessing
@@ -59,6 +61,12 @@ on_message_methods = [callback_for_mode]
 def main():
     global on_message_methods
     global process_mapping
+
+    process_setup = multiprocessing.Process(target=configure_ip.setup_ip())
+    process_setup.start()   #setup ip for connecting access point
+    process_setup.join()
+
+
     process_qr = multiprocessing.Process(target=readingQR.main)
     process_heartbit = multiprocessing.Process(target=heartbeat.send_heartbeat)
     process_mapping = multiprocessing.Process(target=mapping.main)
