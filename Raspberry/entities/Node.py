@@ -23,7 +23,7 @@ class Node:
         return self.type
 
     def get_pos_x(self):
-        return self.pos[0]
+        return int(self.pos[0])
 
     def get_pos_y(self):
-        return self.pos[1]
+        return int(self.pos[1])

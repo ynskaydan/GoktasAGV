@@ -15,6 +15,7 @@ sub_qr_topic = "qr"
 sub_topics = [sub_qr_topic, sub_corner_topic, sub_obstacle_topic]
 send_client = connect_mqtt()
 
+
 def main():
     global direction
     print("Mapping started! parent id:", os.getppid(), " self id:", os.getpid())
@@ -27,7 +28,6 @@ def main():
             g.add_node("S", 0, 0, "Start", {})
         if result:
             print("Past data write on graph object")
-
 
     setup_mapping()
 
@@ -53,89 +53,108 @@ def main():
             send_data(client, "QR is already in list", sub_qr_topic)
         else:
             json_graph = convert_json(g)
-            db_graph_a.write(json_graph+ "\n")
+            db_graph_a.write(json_graph + "\n")
             send_data(send_client, json_graph, pub_topic)  # Node değerlerini mqtt'ye göndermek
 
-
     def callback_for_corner(client, userdata, msg):
-        global direction
         message = msg.payload.decode('utf-8')
         corner_type = message
-        nodes = list(g.get_nodes())
-        node_id = nodes[len(nodes) - 1]  # Listedeki en son node çağırmak
-        past_node = g.get_node(node_id)
+        result = add_node(g, corner_type)
+        if result[0]:
+            json_graph = convert_json(g)
+            db_graph_a.write(json_graph + "\n")
+            send_data(send_client, json_graph, pub_topic)  # Node değerlerini mqtt'ye göndermek
+        else:
+            node = result[1]
 
-        qr_keys = list(g.get_qr_list())
-        last_qr = qr_keys[len(qr_keys) - 1]  # en son eklenen qr çağırmak
-        qr = g.get_qr(last_qr)
 
-        corner = get_corner_data(corner_type, qr)
-        posx = corner[0]
-        posy = corner[1]
-        direction = corner[2]
-        unvisited_directions = corner[3]
+    callback_methods = [callback_for_qr, callback_for_corner, callback_for_obstacle]
+    mqtt_sub(broker, sub_topics, callback_methods)
 
+
+def add_node(g, corner_type):
+    global direction
+    nodes = list(g.get_nodes())
+    node_id = nodes[len(nodes) - 1]  # Listedeki en son node çağırmak
+    past_node = g.get_node(node_id)
+
+    qr_keys = list(g.get_qr_list())
+    last_qr = qr_keys[len(qr_keys) - 1]  # en son eklenen qr çağırmak
+    qr = g.get_qr(last_qr)
+    corner = get_corner_data(corner_type, qr)
+    posx = corner[0]
+    posy = corner[1]
+    direction = corner[2]
+    unvisited_directions = corner[3]
+    result = check_node_exist(g, posx, posy)
+    if not result[0]:
         node_id = str(g.num_of_nodes)
         new_node = g.add_node(node_id, posx, posy, corner_type, unvisited_directions)
         weight = int(new_node.get_pos_x() - past_node.get_pos_x()) + int(
             new_node.get_pos_y() - past_node.get_pos_y())
-
         g.add_edge(past_node, new_node, weight)
-        json_graph = convert_json(g)
-        db_graph_a.write(json_graph+ "\n")
-        send_data(send_client, json_graph, pub_topic)  # Node değerlerini mqtt'ye göndermek
+        return True
+    else:
+        return False, result[1]
 
-    def get_corner_data(corner_type, qr):
-        global direction
-        corner_actions = {
-            "LEFT_L": {
-                "N": (0, 10, "E"),
-                "E": (-10, 0, "N"),
-                "S": (0, -10, "W"),
-                "W": (10, 0, "S"),
-            },
-            "RIGHT_L": {
-                "N": (0, 10, "W"),
-                "E": (-10, 0, "S"),
-                "S": (0, -10, "E"),
-                "W": (10, 0, "N"),
-            },
-            "T": {
-                "N": (0, 10, "W", ["E"]),
-                "E": (-10, 0, "E", ["S"]),
-                "S": (0, -10, "W", ["S"]),
-                "W": (10, 0, "W", ["S"]),
-            },
-            "DOWN_T": {
-                "S": (0, -10, "W", ["E"]),
-                "E": (-10, 0, "E", ["N"]),
-                "W": (10, 0, "W", ["N"]),
-            },
-            # "SIDEWAYS_T": {
-            #     "N": (0, 10, "W", ["N"]),
-            #     "E": (-10, 0, "N", ["S"]),
-            #     "S": (0, -10, "W", ["S"]),
-            #     "W": (10, 0, "N", ["S"]),
-            # },
-        }
 
-        unvisited_directions = []
-        posx = qr.get_pos_x()
-        posy = qr.get_pos_y()
-        new_direction = ""
-        if corner_type in corner_actions:
-            if direction in corner_actions[corner_type]:
-                action = corner_actions[corner_type][direction]
-                posx += action[0]
-                posy += action[1]
-                new_direction = action[2]
-                if len(action) > 3:
-                    unvisited_directions = action[3]
+def get_corner_data(corner_type, qr):
+    global direction
+    corner_actions = {
+        "LEFT_L": {
+            "N": (0, 10, "E"),
+            "E": (-10, 0, "N"),
+            "S": (0, -10, "W"),
+            "W": (10, 0, "S"),
+        },
+        "RIGHT_L": {
+            "N": (0, 10, "W"),
+            "E": (-10, 0, "S"),
+            "S": (0, -10, "E"),
+            "W": (10, 0, "N"),
+        },
+        "T": {
+            "N": (0, 10, "W", ["E"]),
+            "E": (-10, 0, "E", ["S"]),
+            "S": (0, -10, "W", ["S"]),
+            "W": (10, 0, "W", ["S"]),
+        },
+        "DOWN_T": {
+            "S": (0, -10, "W", ["E"]),
+            "E": (-10, 0, "E", ["N"]),
+            "W": (10, 0, "W", ["N"]),
+        },
+        # "SIDEWAYS_T": {
+        #     "N": (0, 10, "W", ["N"]),
+        #     "E": (-10, 0, "N", ["S"]),
+        #     "S": (0, -10, "W", ["S"]),
+        #     "W": (10, 0, "N", ["S"]),
+        # },
+    }
 
-        return posx, posy, new_direction, unvisited_directions
+    unvisited_directions = []
+    posx = qr.get_pos_x()
+    posy = qr.get_pos_y()
+    new_direction = ""
+    if corner_type in corner_actions:
+        if direction in corner_actions[corner_type]:
+            action = corner_actions[corner_type][direction]
+            posx += action[0]
+            posy += action[1]
+            new_direction = action[2]
+            if len(action) > 3:
+                unvisited_directions = action[3]
 
-    callback_methods = [callback_for_qr, callback_for_corner, callback_for_obstacle]
-    mqtt_sub(broker, sub_topics, callback_methods)
+    return posx, posy, new_direction, unvisited_directions
+
+
+def check_node_exist(graph, posx, posy):
+    exist = False
+    nodes = g.get_nodes()
+    for node_id in nodes:
+        node = g.get_node(node_id)
+        if node.get_pos_x() == int(posx) & node.get_pos_y() == int(posy):
+            return True, node
 
 
 def convert_json(graph):
@@ -180,7 +199,7 @@ def read_database(graph):
     if len(lines) == 0:
         return False
     else:
-        json_graph = lines[len(lines)-1]
+        json_graph = lines[len(lines) - 1]
         data = json.loads(json_graph)
 
         nodes = data['nodes']
