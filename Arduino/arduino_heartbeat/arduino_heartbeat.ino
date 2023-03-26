@@ -34,7 +34,7 @@ L298NX2 motors(EN_right, rightmotor1, rightmotor2, EN_left, leftmotor1, leftmoto
 
 // Zamanlayıcı değişkenleri
 unsigned long last_heartbeat = 0;
-const unsigned long heartbeat_interval = 5000;
+const unsigned long heartbeat_interval = 500;
 
 void setup() {
   // Motor sürücü pinleri için çıkış modu ayarlanır

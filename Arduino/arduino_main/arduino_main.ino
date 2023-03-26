@@ -10,31 +10,6 @@
 #define rightBaseSpeed 65
 #define leftBaseSpeed 65
 
-#define leftFarSensor 49
-#define leftOuterSensor 48
-#define leftNearSensor 47
-#define leftNearSensor2 46
-#define leftNearSensor3 45
-#define leftNearSensor4 44
-#define leftNearSensor5 43
-#define leftCenterSensor 42
-#define rightCenterSensor 41
-#define rightNearSensor5 40
-#define rightNearSensor4 39
-#define rightNearSensor3 38
-#define rightNearSensor2 37
-#define rightNearSensor 36
-#define rightOuterSensor 35
-#define rightFarSensor 34
-
-int leftCenterReading;
-int leftNearReading;
-int leftOuterReading;
-int leftFarReading;
-int rightCenterReading;
-int rightNearReading;
-int rightOuterReading;
-int rightFarReading;
 
 #define leapTime 450
 #define leftMotor1 4
@@ -56,8 +31,21 @@ byte gateway[] = { 192, 168, 1, 1 };
 
 // MQTT konusu ve istemci adı
 const char* mqtt_topic_move = "move";
-const char* mqtt_topic_heartbit = "heartbit";
+const char* mqtt_topic_heartbeat = "heartbeat";
+const char* mqtt_topic_arduinoMode = "arduinoMode";
+const char* mqtt_topic_corner= "corner";
 const char* mqtt_client_name = "arduino";
+
+String mode;
+bool live;
+
+int donushizi = 75;
+unsigned int sensors[16];
+QTRSensors qtr;
+
+const uint8_t SensorCount = 16;
+unsigned int sensorValues[SensorCount];
+
 
 // MQTT istemci nesnesi
 EthernetClient ethClient;
@@ -81,7 +69,7 @@ void setup() {
     if (mqttClient.connect("Arduino client")) {
       Serial.println("Connected to MQTT broker");
       mqttClient.subscribe(mqtt_topic_move);
-      mqttClient.subscribe(mqtt_topic_heartbit);
+      mqttClient.subscribe(mqtt_topic_heartbeat);
     } else {
       Serial.print("Failed to connect to MQTT broker, rc=");
       Serial.print(mqttClient.state());
@@ -108,9 +96,9 @@ void setup() {
   int i;
   for (int i = 0; i < 100; i++) {
     if (i < 25 || i >= 75) {
-      turn_right();
+      turnRight();
     } else {
-      turn_left();
+      turnLeft();
     }
     qtr.calibrate();
     delay(20);
@@ -120,34 +108,22 @@ void setup() {
 
   delay(1000);
 }
-
+unsigned long last_heartbeat = 0;
+const unsigned long heartbeat_interval = 500;
 void loop() {
   // MQTT bağlantısını kontrol et
   if (!mqttClient.connected()) {
     reconnect();
   }
   mqttClient.loop();
-}
-
-void reconnect() {
-  while (!mqttClient.connected()) {
-    Serial.println("Attempting MQTT connection...");
-    if (mqttClient.connect("ArduinoClient")) {
-      Serial.println("Connected to MQTT broker");
-      mqttClient.subscribe(mqtt_topic_move);
-      mqttClient.subscribe(mqtt_topic_heartbit);
-    } else {
-      Serial.print("Failed to connect to MQTT broker, rc=");
-      Serial.print(mqttClient.state());
-      Serial.println(" retrying...");
-      delay(5000);
-    }
+  if (millis() - last_heartbeat > heartbeat_interval) {
+    live = false;
+  }
+  if (live == true) {
+    LineFollowing();
   }
 }
-QTRSensors qtr;
 
-const uint8_t SensorCount = 16;
-unsigned int sensorValues[SensorCount];
 const unsigned int EN_left = 10;
 const unsigned int leftmotor1 = 4;
 const unsigned int leftmotor2 = 5;
@@ -169,17 +145,28 @@ void callback(char* topic, byte* message, unsigned int length) {
 
   if (topicStr == mqtt_topic_move) {
     // callback for topic1
-    manualControl(messageStr);
-    Serial.println("Received message on topic1: " + messageStr);
+    if (mode == "manual") {
+      manualControl(messageStr);
+      Serial.println("Received message on topic move: " + messageStr);
+    }
     // do something
-  } else if (topicStr == mqtt_topic_heartbit) {
+  } else if (topicStr == mqtt_topic_heartbeat) {
+    if (messageStr == "heartbeat") {
+      last_heartbeat = millis();
+    }
 
-    Serial.println("Received message on topic2: " + messageStr);
-  } else if (topicStr == "eklenecek topic") {
+    Serial.println("Received message on topic heartbeat: " + messageStr);
+  } else if (topicStr == mqtt_topic_arduinoMode) {
+    mode = messageStr;
+
+    Serial.println("Received message on topic mode: " + messageStr);
+  }else if (topicStr == mqtt_topic_corner) {
+
+    Serial.println("Received message on topic corner: " + messageStr);
   }
 }
 
-
+// SOME NECESSARY FUNCTIONS
 void manualControl(String message) {
 
   if (message == "W") {
@@ -204,14 +191,151 @@ void manualControl(String message) {
     motors.setSpeedA(0);
   }
 }
+void LineFollowing() {
+  qtr.read(sensors);
+  for (int i = 0; i < 16; i++) {
+    Serial.print(sensors[i]);
+    Serial.print("\t");
+  }
+  Serial.println();
+  if (sensors[15] > 500 && sensors[0] < 500) {
+    Serial.println("Sola L kavşak algılandı...");
+    mqttClient.publish(mqtt_topic_corner,"LEFT_L");
+    delay(2000);
+    turnLeft();
+    moveForward();
+  } else if (sensors[0] > 500 && sensors[15] < 500) {
+    Serial.println("Sağa L kavşak algılandı...");
+    mqttClient.publish(mqtt_topic_corner,"RIGHT_L");
+    delay(2000);
+    turnRight();
+    moveForward();
+  } else if (sensors[0] > 500 && sensors[15] > 500 && (sensors[7] > 500 && sensors[8] > 500)) {
+    Serial.println("T kavşak algılandı");
+    mqttClient.publish(mqtt_topic_corner,"T");
+    delay(2000);
+    turnLeft();
+    moveForward();
+  } else {
+    moveForward();
+    Serial.println("Düz devam ediliyor.");
+  }
+}
+void reconnect() {
+  while (!mqttClient.connected()) {
+    Serial.println("Attempting MQTT connection...");
+    if (mqttClient.connect("ArduinoClient")) {
+      Serial.println("Connected to MQTT broker");
+      mqttClient.subscribe(mqtt_topic_move);
+      mqttClient.subscribe(mqtt_topic_heartbeat);
+      mqttClient.subscribe(mqtt_topic_arduinoMode);
+    } else {
+      Serial.print("Failed to connect to MQTT broker, rc=");
+      Serial.print(mqttClient.state());
+      Serial.println(" retrying...");
+      delay(5000);
+    }
+  }
+}
+
+void turnLeft() {
 
 
-void loopLineFollowing() {
-  int lastError = 0;
-  // read calibrated sensor values and obtain a measure of the line position
+  while (digitalRead(sensors[7]) > 200 || digitalRead(sensors[8]) > 200) {
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, HIGH);
+    digitalWrite(rightMotor1, HIGH);
+    digitalWrite(rightMotor2, LOW);
+    analogWrite(rightMotorE, donushizi);
+    analogWrite(leftMotorE, donushizi);
+    delay(5);
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, LOW);
+    digitalWrite(rightMotor1, LOW);
+    digitalWrite(rightMotor2, LOW);
+    delay(2);
+  }
+  while (digitalRead(sensors[8]) < 200) {
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, HIGH);
+    digitalWrite(rightMotor1, HIGH);
+    digitalWrite(rightMotor2, LOW);
+    analogWrite(rightMotorE, donushizi);
+    analogWrite(leftMotorE, donushizi);
+    delay(4);
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, LOW);
+    digitalWrite(rightMotor1, LOW);
+    digitalWrite(rightMotor2, LOW);
+    delay(1);
+  }
+  while (digitalRead(sensors[7]) < 200) {
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, HIGH);
+    digitalWrite(rightMotor1, HIGH);
+    digitalWrite(rightMotor2, LOW);
+    analogWrite(rightMotorE, donushizi);
+    analogWrite(leftMotorE, donushizi);
+    delay(4);
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, LOW);
+    digitalWrite(rightMotor1, LOW);
+    digitalWrite(rightMotor2, LOW);
+    delay(1);
+  }
+
+
+}  //voidturnleft
+void turnRight() {
+
+  while (digitalRead(sensors[8]) > 200 || digitalRead(sensors[7]) > 200) {
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, HIGH);
+    digitalWrite(rightMotor1, HIGH);
+    digitalWrite(rightMotor2, LOW);
+    analogWrite(rightMotorE, donushizi);
+    analogWrite(leftMotorE, donushizi);
+    delay(5);
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, LOW);
+    digitalWrite(rightMotor1, LOW);
+    digitalWrite(rightMotor2, LOW);
+    delay(2);
+  }
+
+  while (digitalRead(sensors[7]) < 200) {
+    digitalWrite(leftMotor1, HIGH);
+    digitalWrite(leftMotor2, LOW);
+    digitalWrite(rightMotor1, LOW);
+    digitalWrite(rightMotor2, HIGH);
+    analogWrite(rightMotorE, donushizi);
+    analogWrite(leftMotorE, donushizi);
+    delay(4);
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, LOW);
+    digitalWrite(rightMotor1, LOW);
+    digitalWrite(rightMotor2, LOW);
+    delay(1);
+  }
+  while (digitalRead(sensors[8]) < 200) {
+    digitalWrite(leftMotor1, HIGH);
+    digitalWrite(leftMotor2, LOW);
+    digitalWrite(rightMotor1, LOW);
+    digitalWrite(rightMotor2, HIGH);
+    analogWrite(rightMotorE, donushizi);
+    analogWrite(leftMotorE, donushizi);
+    delay(4);
+    digitalWrite(leftMotor1, LOW);
+    digitalWrite(leftMotor2, LOW);
+    digitalWrite(rightMotor1, LOW);
+    digitalWrite(rightMotor2, LOW);
+    delay(1);
+  }
+}  //voidturnright
+void moveForward() {
   unsigned int position = qtr.readLineBlack(sensorValues);
 
-
+  int lastError = 0;
   int error = position - 7500;
   int motorSpeed = Kp * error + Kd * (error - lastError);
   lastError = error;
@@ -230,4 +354,12 @@ void loopLineFollowing() {
   digitalWrite(leftMotor1, HIGH);
   digitalWrite(leftMotor2, LOW);
   analogWrite(leftMotorE, leftMotorSpeed);
+}
+void wait() {
+  digitalWrite(rightMotor1, LOW);
+  digitalWrite(rightMotor2, LOW);
+
+
+  digitalWrite(leftMotor1, LOW);
+  digitalWrite(leftMotor2, LOW);
 }
