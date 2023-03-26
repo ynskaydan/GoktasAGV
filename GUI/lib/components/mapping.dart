@@ -1,184 +1,103 @@
 import 'dart:convert';
-import 'dart:html';
-import 'dart:io';
-import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:goktasgui/components/constants.dart';
-import 'package:goktasgui/components/controller.dart';
 import 'package:universal_mqtt_client/universal_mqtt_client.dart';
-import 'package:mqtt_client/mqtt_client.dart';
-import 'package:goktasgui/components/constants.dart';
 
 import '../entity/graph.dart';
 
+var mappingState = false;
+
 var mappingStateTopic = "mappingState";
-bool mappingState = true;
-var nodeId;
-var nodeType;
-var adj;
 
-class MyCustomPainter extends CustomPainter {
-  //final List<Offset> points;
-  final List<String> type;
-  //final List<dynamic> adjList;
-  //final List<String> idList;
-  final List<Node> testNode;
-  MyCustomPainter(this.testNode, this.type);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.black
-      ..strokeWidth = 2;
-
-    final paint2 = Paint()..color = Colors.red;
-    final paint3 = Paint()..color = Colors.blue;
-    final paint4 = Paint()..color = Colors.green;
-
-    /*   for (var i = 0; i < adjList.length; i++) {
-      for (var m = 0; m < points.length - 1; m++)
-        if (adjList[i] == idList[m])
-          canvas.drawLine(points[i], points[m], paint);
-    }
-     */
-    final List<dynamic> nodes = testNode;
-    nodes.forEach((node) {
-      Offset startPosition = node.position;
-
-      node.adjacentNodeIds.forEach((adjacentNodeId) {
-        Node adjacentNode = nodes.firstWhere((n) => n.id == adjacentNodeId);
-
-        Offset endPosition = adjacentNode.pos as Offset;
-
-        canvas.drawLine(startPosition, endPosition, paint);
-      });
-    });
-
-    for (var i = 0; i < points.length; i++) {
-      var point = points[i];
-      var typeInput = type[i];
-      //canvas.drawCircle(point, 5, paint2);
-      switch (typeInput) {
-        case "S":
-          canvas.drawRect(Rect.fromCenter(center: point, width: 15, height: 15),
-              Paint()..color = Colors.black);
-          break;
-        case "T":
-          canvas.drawRect(Rect.fromCenter(center: point, width: 15, height: 15),
-              Paint()..color = Colors.red);
-          break;
-        case "DOWN_L2":
-          canvas.drawRect(Rect.fromCenter(center: point, width: 15, height: 15),
-              Paint()..color = Colors.blue);
-          break;
-        case "Q5":
-          canvas.drawRect(Rect.fromCenter(center: point, width: 15, height: 15),
-              Paint()..color = Colors.green);
-          break;
-        default:
-          canvas.drawRect(Rect.fromCenter(center: point, width: 15, height: 15),
-              Paint()..color = Colors.amber);
-          break;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(MyCustomPainter oldDelegate) =>
-      oldDelegate.points != points;
-}
-
-class MappingWidget extends StatefulWidget {
-  final List<Offset> points;
-
-  const MappingWidget({super.key, required this.points});
-
-  @override
-  State<MappingWidget> createState() => _MappingWidgetState();
-}
-
-class _MappingWidgetState extends State<MappingWidget> {
+class MapWidget extends StatefulWidget {
+  MapWidget({super.key, required this.nodes});
+  List<Node> nodes;
   final client = UniversalMqttClient(
     broker: Uri.parse('ws://localhost:8080'),
     autoReconnect: true,
   );
-  List<Offset> points = [];
-  List<String> idList = [];
-  List<String> typeList = [];
-  List<dynamic> adjList = [];
-  @override
-  void initState() {
-    mapping();
-    super.initState();
-  }
 
   void mapping() async {
     await client.connect();
     final subscription =
         client.handleString('mapping', MqttQos.atLeastOnce).listen((message) {
       Graph graph = Graph.fromJson(jsonDecode(message));
-      List<dynamic> nodes = graph.nodes;
-      List<dynamic> qrs = graph.qr;
-
-      List<double> xList = []; // x pozisyonları
-      List<double> yList = [];
-
-      List<double> qrxList = [];
-      List<double> qryList = [];
-      Graph graph = Graph.fromJson(jsonDecode(message));
-
-      Map<String, dynamic> jsonMap = json.decode(message);
-
-      for (var node in nodes) {
-        nodeId = node['id'];
-        nodeType = node['type'];
-        adj = node['adjacents'];
-
-        adjList.add(adj);
-        typeList.add(nodeType);
-        idList.add(nodeId);
-      }
-      for (var i = 0; i < adjList.length; i++) {
-        print(adjList[i]);
-      }
-      // List<Map<String, dynamic>> nodePositions = nodes
-      //     .map((nodeJson) => nodeJson['pos'] as Map<String, dynamic>)
-      //     .toList();
-      // for (var nodePos in nodePositions) {
-      //   double x = nodePos['x'];
-      //   double y = nodePos['y'];
-
-      // xList.add(x);
-      // yList.add(y);
-
-      // List<Map<String, dynamic>> qrPositions =
-      //     qrs.map((qrJson) => qrJson['pos'] as Map<String, dynamic>).toList();
-      // for (var qrPos in qrPositions) {
-      //   double x = qrPos['x'];
-      //   double y = qrPos['y'];
-
-      // qrxList.add(x);
-      // qryList.add(y);
-    });
-
-    setState(() {
-      points.clear();
-      // for (int i = 0; i < xList.length; i++) {
-      //   points.add(Offset(xList[i], yList[i]));
-      // }
+      nodes = graph.nodes;
+      //List<QR> qrs = graph.qr;
     });
   }
+
+  _MapWidgetState createState() => _MapWidgetState();
 }
 
-@override
-Widget build(BuildContext context) {
-  return SizedBox(
-    child: Column(
-      children: [
-        CustomPaint(
-          painter: MyCustomPainter(asd, idList),
-        ),
-      ],
-    ),
-  );
+class _MapWidgetState extends State<MapWidget> {}
+
+class MapPainter extends CustomPainter {
+  final List<Node> nodes;
+
+  const MapPainter(this.nodes);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.black
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+
+    final radius = 10.0;
+
+    // Draw the nodes
+    for (final node in nodes) {
+      final type = node.type;
+      final pos = node.pos;
+      final x = pos['x'] as double;
+      final y = pos['y'] as double;
+
+      if (type == 'Start') {
+        canvas.drawCircle(Offset(x, y), radius, paint);
+      } else if (type == 'LEFT_L') {
+        final lineStart = Offset(x - radius, y);
+        final lineEnd = Offset(x, y + radius);
+        canvas.drawLine(lineStart, lineEnd, paint);
+      } else if (type == 'RIGHT_L') {
+        final lineStart = Offset(x + radius, y);
+        final lineEnd = Offset(x, y + radius);
+        canvas.drawLine(lineStart, lineEnd, paint);
+      }
+    }
+
+    // Draw the connections between the nodes
+    for (final node in nodes) {
+      final pos = node.pos;
+      final x = pos['x'] as double;
+      final y = pos['y'] as double;
+      final adjacents = node.adjacents;
+      for (final adj in adjacents) {
+        final adjacentNode = nodes.firstWhere((n) => n.id == adj);
+        final adjacentPos = adjacentNode.pos;
+        final adjX = adjacentPos['x'] as double;
+        final adjY = adjacentPos['y'] as double;
+
+        canvas.drawLine(Offset(x, y), Offset(adjX, adjY), paint);
+      }
+    }
+
+    // Draw an arrow for the start node
+    final startNode = nodes.firstWhere((n) => n.type == 'Start');
+    if (startNode != null) {
+      final startPos = startNode.pos;
+      final start = Offset(startPos['x'] as double, startPos['y'] as double);
+      final arrowLength = 20.0;
+
+      canvas.drawLine(start, Offset(start.dx + arrowLength, start.dy), paint);
+
+      final arrowTip = Offset(start.dx + arrowLength - 10, start.dy - 10);
+      final arrowBase = Offset(start.dx + arrowLength - 10, start.dy + 10);
+      canvas.drawLine(arrowTip, start, paint);
+      canvas.drawLine(arrowBase, start, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(MapPainter oldDelegate) => false;
 }
