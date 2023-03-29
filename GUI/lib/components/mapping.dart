@@ -1,21 +1,37 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:universal_mqtt_client/universal_mqtt_client.dart';
+import 'dart:ui' as ui;
 
 import '../entity/graph.dart';
 
 var mappingState = false;
 
 var mappingStateTopic = "mappingState";
+List<Node> nodes = [];
+List<QR> qrs = [];
+List<Obstacles> obstacles = [];
 
-class MapWidget extends StatefulWidget {
-  MapWidget({super.key, required this.nodes});
-  List<Node> nodes;
+class Mapper extends StatefulWidget {
+  Mapper({super.key});
+
+  @override
+  State<Mapper> createState() => _MapperState();
+}
+
+class _MapperState extends State<Mapper> {
   final client = UniversalMqttClient(
     broker: Uri.parse('ws://localhost:8080'),
     autoReconnect: true,
   );
+
+  @override
+  void initState() {
+    mapping();
+    super.initState();
+  }
 
   void mapping() async {
     await client.connect();
@@ -23,25 +39,66 @@ class MapWidget extends StatefulWidget {
         client.handleString('mapping', MqttQos.atLeastOnce).listen((message) {
       Graph graph = Graph.fromJson(jsonDecode(message));
       nodes = graph.nodes;
-      //List<QR> qrs = graph.qr;
+      qrs = graph.qr;
+      obstacles = graph.obstacles;
     });
   }
 
-  _MapWidgetState createState() => _MapWidgetState();
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration:
+          BoxDecoration(color: Colors.white, border: Border.all(width: 10)),
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width / 2,
+        height: MediaQuery.of(context).size.height / 2.5 + 40,
+        child: CustomPaint(
+          size: Size(MediaQuery.of(context).size.width / 3,
+              MediaQuery.of(context).size.height / 2.5 + 40),
+          painter: MapPainter(
+              nodes,
+              qrs,
+              obstacles,
+              MediaQuery.of(context).size.width / 2,
+              MediaQuery.of(context).size.height / 2.5 + 40),
+        ),
+      ),
+    );
+  }
 }
-
-class _MapWidgetState extends State<MapWidget> {}
 
 class MapPainter extends CustomPainter {
   final List<Node> nodes;
+  final List<QR> qrs;
+  final List<Obstacles> obstacles;
+  final double scaleX;
+  final double scaleY;
 
-  const MapPainter(this.nodes);
+  const MapPainter(
+      this.nodes, this.qrs, this.obstacles, this.scaleX, this.scaleY);
 
   @override
-  void paint(Canvas canvas, Size size) {
+  Future<void> paint(Canvas canvas, Size size) async {
+    if (nodes.isEmpty || qrs.isEmpty) return;
+    double coefficient = 0;
+    coefficient = scaleX / 1600;
     final paint = Paint()
       ..color = Colors.black
       ..strokeWidth = 2
+      ..style = PaintingStyle.fill;
+    final linePaint = Paint()
+      ..color = Colors.yellow
+      ..strokeWidth = 2
+      ..style = PaintingStyle.fill;
+
+    final qrPaint = Paint()
+      ..color = Colors.blue
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+
+    final obstaclePaint = Paint()
+      ..color = Colors.red
+      ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
 
     final radius = 10.0;
@@ -52,49 +109,46 @@ class MapPainter extends CustomPainter {
       final pos = node.pos;
       final x = pos['x'] as double;
       final y = pos['y'] as double;
-
-      if (type == 'Start') {
-        canvas.drawCircle(Offset(x, y), radius, paint);
-      } else if (type == 'LEFT_L') {
-        final lineStart = Offset(x - radius, y);
-        final lineEnd = Offset(x, y + radius);
-        canvas.drawLine(lineStart, lineEnd, paint);
-      } else if (type == 'RIGHT_L') {
-        final lineStart = Offset(x + radius, y);
-        final lineEnd = Offset(x, y + radius);
-        canvas.drawLine(lineStart, lineEnd, paint);
-      }
+      double a = scaleX - (coefficient * x);
+      double b = scaleY - (coefficient * y);
+      canvas.drawCircle(Offset(a, b), radius, paint);
     }
 
+    for (final qr in qrs) {
+      final pos = qr.pos;
+      final x = pos['x'] as double;
+      final y = pos['y'] as double;
+      double a = scaleX - (coefficient * x);
+      double b = scaleY - (coefficient * y);
+      canvas.drawCircle(Offset(a, b), radius, qrPaint);
+    }
+    for (final obs in obstacles) {
+      final pos = obs.pos;
+      final x = pos["x"] as double;
+      final y = pos["y"] as double;
+      double a = scaleX - (coefficient * x);
+      double b = scaleY - (coefficient * y);
+      Rect rect = Rect.fromLTWH(a, b, 3, 12);
+      canvas.drawRect(rect, obstaclePaint);
+    }
     // Draw the connections between the nodes
     for (final node in nodes) {
       final pos = node.pos;
       final x = pos['x'] as double;
       final y = pos['y'] as double;
+      double a = scaleX - (coefficient * x);
+      double b = scaleY - (coefficient * y);
       final adjacents = node.adjacents;
       for (final adj in adjacents) {
         final adjacentNode = nodes.firstWhere((n) => n.id == adj);
         final adjacentPos = adjacentNode.pos;
         final adjX = adjacentPos['x'] as double;
         final adjY = adjacentPos['y'] as double;
+        double aAdj = scaleX - (coefficient * adjX);
+        double bAdj = scaleY - (coefficient * adjY);
 
-        canvas.drawLine(Offset(x, y), Offset(adjX, adjY), paint);
+        canvas.drawLine(Offset(a, b), Offset(aAdj, bAdj), linePaint);
       }
-    }
-
-    // Draw an arrow for the start node
-    final startNode = nodes.firstWhere((n) => n.type == 'Start');
-    if (startNode != null) {
-      final startPos = startNode.pos;
-      final start = Offset(startPos['x'] as double, startPos['y'] as double);
-      final arrowLength = 20.0;
-
-      canvas.drawLine(start, Offset(start.dx + arrowLength, start.dy), paint);
-
-      final arrowTip = Offset(start.dx + arrowLength - 10, start.dy - 10);
-      final arrowBase = Offset(start.dx + arrowLength - 10, start.dy + 10);
-      canvas.drawLine(arrowTip, start, paint);
-      canvas.drawLine(arrowBase, start, paint);
     }
   }
 

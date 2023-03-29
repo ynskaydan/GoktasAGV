@@ -87,8 +87,6 @@ Widget DataComponentContent({required String text}) {
   );
 }
 
-final points = [];
-
 class MainButtons extends StatefulWidget {
   const MainButtons({super.key});
 
@@ -134,7 +132,7 @@ class _MainButtonsState extends State<MainButtons> {
           color: Color.fromRGBO(40, 40, 40, 1.0),
         ),
         height: MediaQuery.of(context).size.height / 12,
-        width: MediaQuery.of(context).size.width / 1.5 + 40,
+        width: MediaQuery.of(context).size.width / 1.2 - 20,
         child: Center(
           child: Padding(
             padding: const EdgeInsets.all(16.0),

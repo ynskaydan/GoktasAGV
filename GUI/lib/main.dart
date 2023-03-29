@@ -1,18 +1,16 @@
 // @dart=2.9
 import 'dart:async';
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:goktasgui/components/controller.dart';
-import 'package:goktasgui/components/mapping.dart';
 
-import 'package:universal_mqtt_client/universal_mqtt_client.dart';
-import 'package:mqtt_client/mqtt_client.dart';
+import 'package:flutter/material.dart';
+
+import 'package:goktasgui/components/controller.dart';
+
 import 'package:goktasgui/components/constants.dart';
-import 'package:goktasgui/components/mapping.dart';
+
 import 'package:goktasgui/components/senario.dart';
 
 import 'components/emergency.dart';
+import 'components/mapping.dart';
 
 void main() async {
   runApp(const MyApp());
@@ -88,7 +86,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 Image.asset(
                   "assets/images/goktas.png",
                   height: MediaQuery.of(context).size.height / 8,
-                  width: MediaQuery.of(context).size.width / 12,
+                  width: MediaQuery.of(context).size.width / 10,
                 )
               ],
             ),
@@ -182,14 +180,14 @@ class _MyHomePageState extends State<MyHomePage> {
                   children: [
                     DataComponent(
                       subTitle: "Harita",
-                      contentData: MappingWidget(),
-                      widthSize: MediaQuery.of(context).size.width / 2.4,
+                      contentData: Mapper(),
+                      widthSize: MediaQuery.of(context).size.width / 1.8,
                       heightSize: MediaQuery.of(context).size.height / 2 + 40,
                     ),
                     DataComponent(
                       subTitle: "Senaryo",
                       contentData: EntrySenario(),
-                      widthSize: MediaQuery.of(context).size.width / 2.4,
+                      widthSize: MediaQuery.of(context).size.width / 1.8,
                       heightSize: MediaQuery.of(context).size.height / 6,
                     ),
                   ],
