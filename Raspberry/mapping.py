@@ -1,8 +1,10 @@
-import json
 from CrossCuttingConcerns.mqtt import connect_mqtt, send_data, broker
 from CrossCuttingConcerns.sub_mqtt import mqtt_sub
 from entities.Graph import Graph
+from entities.Node import Node
 import os
+
+from graph_converter import read_database, convert_json
 
 direction = "E"
 
@@ -23,7 +25,7 @@ def main():
     def setup_mapping():
         global g
         g = Graph()
-        result = read_database(g)
+        result = read_database(db_graph_r, g)
         if not result:
             g.add_node("S", 0, 0, "Start", {})
         if result:
@@ -41,9 +43,7 @@ def main():
         if result == 0:
             print("Obstacle already in list")
         else:
-            json_graph = convert_json(g)
-            db_graph_a.write(json_graph + "\n")
-            send_data(send_client, json_graph, pub_topic)  # Node değerlerini mqtt'ye göndermek
+            send_graph_status(g)
 
     def callback_for_qr(client, userdata, msg):
         message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
@@ -52,24 +52,34 @@ def main():
         if result == 0:
             send_data(client, "QR is already in list", sub_qr_topic)
         else:
-            json_graph = convert_json(g)
-            db_graph_a.write(json_graph + "\n")
-            send_data(send_client, json_graph, pub_topic)  # Node değerlerini mqtt'ye göndermek
+            send_graph_status(g)
 
     def callback_for_corner(client, userdata, msg):
         message = msg.payload.decode('utf-8')
         corner_type = message
         result = add_node(g, corner_type)
-        if result[0]:
-            json_graph = convert_json(g)
-            db_graph_a.write(json_graph + "\n")
-            send_data(send_client, json_graph, pub_topic)  # Node değerlerini mqtt'ye göndermek
-        else:
-            node = result[1]
-
+        print(result)
+        if result != str(0):
+            node_id = result
+            visit_unvisited_direction(node_id)
+        print(direction)
+        send_graph_status(g)  # Node değerlerini mqtt'ye göndermek
 
     callback_methods = [callback_for_qr, callback_for_corner, callback_for_obstacle]
+
     mqtt_sub(broker, sub_topics, callback_methods)
+
+
+def visit_unvisited_direction(node_id):
+    global direction
+    node = g.get_node(node_id)
+    direction = node.del_unvisited_direction()
+
+
+def send_graph_status(graph):
+    json_graph = convert_json(graph)
+    db_graph_a.write(json_graph + "\n")
+    send_data(send_client, json_graph, pub_topic)  # Node değerlerini mqtt'ye göndermek
 
 
 def add_node(g, corner_type):
@@ -87,31 +97,43 @@ def add_node(g, corner_type):
     direction = corner[2]
     unvisited_directions = corner[3]
     result = check_node_exist(g, posx, posy)
-    if not result[0]:
+    print(result)
+    if result == "none":
         node_id = str(g.num_of_nodes)
         new_node = g.add_node(node_id, posx, posy, corner_type, unvisited_directions)
         weight = int(new_node.get_pos_x() - past_node.get_pos_x()) + int(
             new_node.get_pos_y() - past_node.get_pos_y())
         g.add_edge(past_node, new_node, weight)
-        return True
+        return str(0)
     else:
-        return False, result[1]
+        return result
+
+
+def check_node_exist(graph, posx, posy):
+    exist = "none"
+    nodes = graph.get_nodes()
+    for node_id in nodes:
+        node = g.get_node(node_id)
+        if node.get_pos_x() == int(posx) and node.get_pos_y() == int(posy):
+            exist = node_id
+            break
+    return exist
 
 
 def get_corner_data(corner_type, qr):
     global direction
     corner_actions = {
         "LEFT_L": {
-            "N": (0, 10, "E"),
-            "E": (-10, 0, "N"),
-            "S": (0, -10, "W"),
-            "W": (10, 0, "S"),
+            "N": (0, 10, "W"),
+            "E": (10, 0, "N"),
+            "S": (0, -10, "E"),
+            "W": (-10, 0, "S"),
         },
         "RIGHT_L": {
-            "N": (0, 10, "W"),
-            "E": (-10, 0, "S"),
-            "S": (0, -10, "E"),
-            "W": (10, 0, "N"),
+            "N": (0, 10, "E"),
+            "E": (10, 0, "S"),
+            "S": (0, -10, "W"),
+            "W": (-10, 0, "N"),
         },
         "T": {
             "N": (0, 10, "W", ["E"]),
@@ -146,90 +168,3 @@ def get_corner_data(corner_type, qr):
                 unvisited_directions = action[3]
 
     return posx, posy, new_direction, unvisited_directions
-
-
-def check_node_exist(graph, posx, posy):
-    exist = False
-    nodes = g.get_nodes()
-    for node_id in nodes:
-        node = g.get_node(node_id)
-        if node.get_pos_x() == int(posx) & node.get_pos_y() == int(posy):
-            return True, node
-
-
-def convert_json(graph):
-    nodes = []
-    qr_list = []
-    obstacles = []
-    for node_id in graph.nodes:
-        node = graph.get_node(node_id)
-        list_adjacents = []
-        list_unvisited_directions = []
-
-        x = node.get_pos_x()
-        y = node.get_pos_y()
-        adjacents = node.get_connections()
-
-        unvisited_directions = node.get_unvisited_directions()
-        for un_visited in unvisited_directions:
-            list_unvisited_directions.append(un_visited)
-        for adjacent in adjacents:
-            list_adjacents.append(adjacent.get_id())
-
-        nodes.append(
-            {"id": node.get_id(), "pos": {"x": x, "y": y}, "type": node.get_type(), "adjacents": list_adjacents,
-             "unvisitedDirections": list_unvisited_directions})
-
-    for qr_id in graph.qr_list:
-        qr = graph.get_qr(qr_id)
-        qr_list.append({"id": qr.get_id(), "pos": {"x": qr.get_pos_x(), "y": qr.get_pos_y()}})
-
-    for obstacle_id in graph.obstacles:
-        obstacle = graph.get_obstacle(obstacle_id)
-        obstacles.append({"id": obstacle.get_id(), "pos": {"x": obstacle.get_posx(), "y": obstacle.get_posy()}})
-
-    graphs = {"nodes": nodes, "qr": qr_list, "obstacles": obstacles}
-
-    converted_json = json.dumps(graphs)
-    return converted_json
-
-
-def read_database(graph):
-    lines = db_graph_r.readlines()
-    if len(lines) == 0:
-        return False
-    else:
-        json_graph = lines[len(lines) - 1]
-        data = json.loads(json_graph)
-
-        nodes = data['nodes']
-        qr_codes = data['qr']
-        obstacles = data['obstacles']
-
-        for node_data in nodes:
-            node_id = node_data['id']
-            pos_x = node_data['pos']['x']
-            pos_y = node_data['pos']['y']
-            type = node_data['type']
-            adjacents = node_data['adjacents']
-            unvisited_directions = node_data['unvisitedDirections']
-            node = graph.add_node(node_id, pos_x, pos_y, type, unvisited_directions)
-            if len(adjacents) > 0:
-                for adjacent_id in adjacents:
-                    adjacent = graph.get_node(adjacent_id)
-                    if adjacent == 0:
-                        continue
-                    weigth = (pos_x - adjacent.get_pos_x()) + (pos_y - adjacent.get_pos_y())
-                    graph.add_edge(node, adjacent, weigth)
-        for qr_code in qr_codes:
-            qr_id = qr_code['id']
-            pos_x = qr_code['pos']['x']
-            pos_y = qr_code['pos']['y']
-            graph.add_qr(qr_id, pos_x, pos_y)
-
-        for obstacle in obstacles:
-            obs_id = obstacle['id']
-            pos_x = obstacle['pos']['x']
-            pos_y = obstacle['pos']['y']
-            graph.add_obstacle(obs_id, pos_x, pos_y)
-        return True
