@@ -1,10 +1,11 @@
-import smbus
+import smbus2
 import math
 import time
+import datetime
 
-bus = smbus.SMBus(1)
+
 address = 0x68
-
+bus = smbus2.SMBus(1)
 # Pusula kalibrasyon sabitleri
 x_offset = 0
 y_offset = 0
@@ -40,14 +41,27 @@ def calibrate_compass():
     y_scale = 1.08
 
 def setup_imu():
+    global bus
     # MPU6050 için güç yönetimini ayarlama
-    write_byte(address, 0x6B, 0x00)
 
+    bus.write_byte_data(0x68,0x6B,0x00)
+    bus.write_byte_data(0x68,0x1A,0x06)
+    bus.write_byte_data(0x68,0x1B,0x18)
+    bus.write_byte_data(0x68,0x1C,0x10)
+    bus.write_byte_data(0x68,0x37,0x02)
+    
+    
+    bus.write_byte_data(0x0C,0x0A,0x16)
+    bus.write_byte_data(0x68,0x0B,0x12)
     # AK8975C için ölçek faktörünü ayarlama
-    write_byte(0x0C, 0x0A, 0x16)
+    bus.write_byte_data(0x68,0x24,0x06)
+    bus.write_byte_data(0x68,0x25,0x08)    
+    
+    
 
 def read_imu():
     # Pusula verileri okuma
+
     x_out = read_word_2c(address, 0x03) - x_offset
     y_out = read_word_2c(address, 0x05) - y_offset
     z_out = read_word_2c(address, 0x07) - z_offset
@@ -76,14 +90,25 @@ calibrate_compass()
 # IMU ayarlarını yapma
 setup_imu()
 
+time_old = datetime.datetime.now().second
 while True:
+    
     # Verileri okuma
     bearing, x_acc, y_acc, z_acc = read_imu()
-
+    time_now = datetime.datetime.now().second
+    diff_time = (time_now - time_old) % 60
+    bearing, x_acc, y_acc, z_acc = read_imu()
+    vx = x_acc * diff_time
+    vy = y_acc * diff_time
+    vz = z_acc - diff_time
+    speed = math.sqrt(vx*vx + vy*vy + vz*vz)
     # Sonuçları yazdırma
     print("Pusula Yönü:", bearing)
     print("X İvme:", x_acc)
     print("Y İvme:", y_acc)
     print("Z İvme:", z_acc)
-
-    # 1
+    print("Speed", speed)
+    print("====== end of iteration =======")
+    print("")
+    time.sleep(1)
+    time_old = datetime.datetime.now().second
