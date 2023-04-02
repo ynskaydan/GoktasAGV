@@ -68,3 +68,23 @@ class Graph:
 
     def get_obstacles(self):
         return self.obstacles.keys()
+
+    def check_node_exist(self, posx, posy):
+        exist = "none"
+        for node_id in self.nodes:
+            node = self.nodes[node_id]
+            if node.get_pos_x() == int(posx) and node.get_pos_y() == int(posy):
+                exist = node_id
+                break
+        return exist
+    def get_last_node(self):
+        node_id = self.nodes[len(self.nodes) - 1]  # Listedeki en son node çağırmak
+        last_node = self.nodes[node_id]
+        return last_node
+    def get_last_qr(self):
+        last_key = self.qr_list[len(self.qr_list) - 1]  # en son eklenen qr çağırmak
+        last_qr = self.qr_list[last_key]
+        return last_qr
+
+
+

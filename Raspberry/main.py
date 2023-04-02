@@ -1,20 +1,15 @@
 import heartbeat
-import os
 import mapping
-import time
 
-from CrossCuttingConcerns import configure_ip
-from CrossCuttingConcerns.mqtt import connect_mqtt, broker
-from CrossCuttingConcerns.sub_mqtt import mqtt_sub
+from CrossCuttingConcerns import configure_ip, mqtt_adapter
 import multiprocessing
 from Sensors import readingQR, obstacle_detection
 
 sub_mode_topic = "mode"
-sub_topics = [sub_mode_topic]
 mode = ""
 
 
-def callback_for_mode(client, userdata, msg):
+def callback_for_mode(client,userdata,msg):
     global mode
     message = msg.payload.decode('utf-8')
     mode_functions = {
@@ -55,17 +50,13 @@ def run_export_mode():
         print("Cannot start a process twitce")
 
 
-on_message_methods = [callback_for_mode]
-
-
 def main():
-    global on_message_methods
     global process_mapping
-
     process_setup = multiprocessing.Process(target=configure_ip.setup_ip())
-    process_setup.start()   #setup ip for connecting access point
+    process_setup.start()  # setup ip for connecting access point
     process_setup.join()
 
+    mqtt_adapter.connect("mn")
 
     process_qr = multiprocessing.Process(target=readingQR.main)
     process_heartbit = multiprocessing.Process(target=heartbeat.send_heartbeat)
@@ -75,11 +66,11 @@ def main():
     # process_obstacle.start()
     process_qr.start()
 
-    client = connect_mqtt()
-
-    mqtt_sub(broker, sub_topics, on_message_methods)
+    mqtt_adapter.subscribe(sub_mode_topic, callback_for_mode)
+    mqtt_adapter.loop_forever()
     process_qr.join()
     process_heartbit.join()
+
 
 
 if __name__ == '__main__':

@@ -1,14 +1,17 @@
 import os
 import time
-from CrossCuttingConcerns.mqtt import connect_mqtt, send_data
 import os
+
+from CrossCuttingConcerns import mqtt_adapter
 
 
 def send_heartbeat():
     print("Heartbeat başladı!")
     print("Heartbeat started! parent id:", os.getppid(), " self id:", os.getpid())
     topic = "heartbeat"
-    client = connect_mqtt()
+    message = "heartbeat"
+    mqtt_adapter.connect("hb")
     while True:
-        send_data(client, "heartbeat", topic)
+        mqtt_adapter.loop()
+        mqtt_adapter.publish(message,topic)
         time.sleep(5)  # 5 saniye bekleme
