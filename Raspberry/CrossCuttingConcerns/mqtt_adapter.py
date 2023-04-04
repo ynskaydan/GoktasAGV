@@ -14,7 +14,7 @@ def connect(id):
 
     def on_connect(client, userdata, flags, rc):
         if rc == 0:
-            print(f"Connected to MQTT Broker!{client_id}")
+            print(f"Connected to MQTT Broker from client {client_id}")
             return True
         else:
             print("Failed to connect ", rc)

@@ -62,8 +62,7 @@ def read_database(db, graph):
                     adjacent = graph.get_node(adjacent_id)
                     if adjacent == 0:
                         continue
-                    weigth = (pos_x - adjacent.get_pos_x()) + (pos_y - adjacent.get_pos_y())
-                    graph.add_edge(node, adjacent, weigth)
+                    graph.add_edge(node, adjacent)
 
         for qr_code in qr_codes:
             qr_id = qr_code['id']

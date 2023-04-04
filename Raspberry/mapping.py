@@ -29,8 +29,8 @@ def main():
     def callback_for_obstacle(client,userdata,msg):
         obs_id = str(g.num_of_obstacle)
         last_node = g.get_last_node()
-        result = g.add_obstacle(obs_id, last_node.get_pos_x(), 80)
-        if result == 0:
+        result_add_obstacle = g.add_obstacle(obs_id, last_node.get_pos_x(), 80)
+        if result_add_obstacle == 0:
             print("Obstacle already in list")
         else:
             send_graph_status(g)
@@ -38,8 +38,8 @@ def main():
     def callback_for_qr(client,userdata,msg):
         message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
         parts = message.split(";")  # QR etiketinin standart halinde pozisyonu ayrıştırmak
-        result = g.add_qr(parts[0], parts[1], parts[2])
-        if result == 0:
+        result_add_qr = g.add_qr(parts[0], parts[1], parts[2])
+        if result_add_qr == 0:
             mqtt_adapter.publish("QR is already in list", sub_qr_topic)
         else:
             send_graph_status(g)
@@ -47,12 +47,12 @@ def main():
     def callback_for_corner(client,userdata,msg):
         message = msg.payload.decode('utf-8')
         corner_type = message
-        result = add_node(g, corner_type)
-        print(result)
-        if result != str(0):
+        result_add_node = add_node(g, corner_type)
+
+        if result_add_node != str(0):
             node_id = result
             visit_unvisited_direction(node_id)
-        print(direction)
+
         send_graph_status(g)  # Node değerlerini mqtt'ye göndermek
 
     mqtt_adapter.subscribe(sub_qr_topic, callback_for_qr)
@@ -82,17 +82,16 @@ def add_node(graph, corner_type):
     posy = corner[1]
     direction = corner[2]
     unvisited_directions = corner[3]
-    result = graph.check_node_exist(posx, posy)
-    print(result)
-    if result == "none":
+    result_check = graph.check_node_exist(posx, posy)
+    print(result_check)
+    if result_check == "none":
         node_id = str(graph.num_of_nodes)
         new_node = graph.add_node(node_id, posx, posy, corner_type, unvisited_directions)
-        weight = int(new_node.get_pos_x() - past_node.get_pos_x()) + int(
-            new_node.get_pos_y() - past_node.get_pos_y())
-        graph.add_edge(past_node, new_node, weight)
+        graph.add_edge(past_node, new_node)
+        print(past_node.get_weight(new_node))
         return str(0)
     else:
-        return result
+        return result_check
 
 
 def get_corner_data(corner_type, qr):
@@ -100,13 +99,13 @@ def get_corner_data(corner_type, qr):
     corner_actions = {
         "LEFT_L": {
             "N": (0, 10, "W"),
-            "E": (10, 0, "N"),
+            "E": (-10, 0, "N"),
             "S": (0, -10, "E"),
-            "W": (-10, 0, "S"),
+            "W": (10, 0, "S"),
         },
         "RIGHT_L": {
             "N": (0, 10, "E"),
-            "E": (10, 0, "S"),
+            "E": (-10, 0, "S"),
             "S": (0, -10, "W"),
             "W": (-10, 0, "N"),
         },
@@ -116,17 +115,14 @@ def get_corner_data(corner_type, qr):
             "S": (0, -10, "W", ["S"]),
             "W": (10, 0, "W", ["S"]),
         },
-        "DOWN_T": {
-            "S": (0, -10, "W", ["E"]),
-            "E": (-10, 0, "E", ["N"]),
+        "RIGHT_T": {
+            "E": (-10, 0, "E", ["S"]),
             "W": (10, 0, "W", ["N"]),
         },
-        # "SIDEWAYS_T": {
-        #     "N": (0, 10, "W", ["N"]),
-        #     "E": (-10, 0, "N", ["S"]),
-        #     "S": (0, -10, "W", ["S"]),
-        #     "W": (10, 0, "N", ["S"]),
-        # },
+         "LEFT_T": {
+             "E": (-10, 0, "E", ["N"]),
+             "W": (10, 0, "W", ["S"]),
+         },
     }
 
     unvisited_directions = []

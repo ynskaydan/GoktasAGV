@@ -45,7 +45,19 @@ class Graph:
     def get_qr(self, id):
         return self.qr_list[id]
 
-    def add_edge(self, from_node, to_node, weight):
+    def add_edge(self, from_node, to_node):
+        weight = 0
+        s_node_pos_x = from_node.get_pos_x()
+        s_node_pos_y = from_node.get_pos_y()
+        f_node_pos_x = to_node.get_pos_x()
+        f_node_pos_y = to_node.get_pos_y()
+
+
+        if f_node_pos_x - s_node_pos_x == 0:
+            weight = abs(f_node_pos_y - s_node_pos_y)
+        if f_node_pos_y - s_node_pos_y == 0:
+            weight = abs(f_node_pos_x- s_node_pos_x)
+
         from_node.add_adjacent(to_node, weight)
         to_node.add_adjacent(from_node, weight)
         self.edges += 1
@@ -78,12 +90,14 @@ class Graph:
                 break
         return exist
     def get_last_node(self):
-        node_id = self.nodes[len(self.nodes) - 1]  # Listedeki en son node çağırmak
-        last_node = self.nodes[node_id]
+        last_node = self.nodes.get(str(self.num_of_nodes))
+        #last_node = nodes[len(self.nodes) - 1]  # Listedeki en son node çağırmak
         return last_node
     def get_last_qr(self):
-        last_key = self.qr_list[len(self.qr_list) - 1]  # en son eklenen qr çağırmak
-        last_qr = self.qr_list[last_key]
+        key_list = list(self.get_qr_list())
+        last_key = key_list[self.num_of_qr-1]
+        last_qr = self.get_qr(last_key)
+
         return last_qr
 
 
