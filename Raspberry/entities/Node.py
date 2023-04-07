@@ -19,6 +19,7 @@ class Node:
 
     def get_unvisited_directions(self):
         return self.unvisited_directions
+
     def del_unvisited_direction(self):
         if len(self.unvisited_directions) > 0:
             result = self.unvisited_directions.pop(0)

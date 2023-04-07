@@ -1,59 +1,71 @@
+import os
+import threading
+
+import imu_manager
 from CrossCuttingConcerns import mqtt_adapter
 from entities.Graph import Graph
-import os
-
-from graph_converter import read_database, convert_json
-
-direction = "E"
+from graph_converter import read_database
 
 db_graph_a = open("./Database/db_graph.txt", "a")
 db_graph_r = open("./Database/db_graph.txt", "r")
-pub_topic = "mapping"
-sub_corner_topic = "corner"
+
+sub_corner_topic = "intersection"
 sub_obstacle_topic = "obstacle"
 sub_qr_topic = "qr"
+pub_topic = "mapping"
+new_direction = ""
+
+lifecycle_pub_topic = "mode"
 
 
 def main():
-    global g
-    global direction
     print("Mapping started! parent id:", os.getppid(), " self id:", os.getpid())
-    g = Graph()
-    mqtt_adapter.connect("map")
-    result = read_database(db_graph_r, g)
+    graph_map = Graph()
+    mqtt_adapter.connect("graph_map")
+    result = read_database(db_graph_r, graph_map)
     if not result:
-        g.add_node("S", 0, 0, "Start", {})
+        graph_map.add_new_intersection("Start", 0, 0, {}, "S")
     if result:
         print("Past data write on graph object")
 
-    def callback_for_obstacle(client,userdata,msg):
-        obs_id = str(g.num_of_obstacle)
-        last_node = g.get_last_node()
-        result_add_obstacle = g.add_obstacle(obs_id, last_node.get_pos_x(), 80)
+    def callback_for_obstacle(client, userdata, msg):
+        last_node = graph_map.get_last_node()
+        result_add_obstacle = graph_map.add_obstacle(last_node.get_pos_x(), 80)
         if result_add_obstacle == 0:
             print("Obstacle already in list")
         else:
-            send_graph_status(g)
+            graph_map.send_graph_status(pub_topic)
 
-    def callback_for_qr(client,userdata,msg):
+    def callback_for_qr(client, userdata, msg):
         message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
         parts = message.split(";")  # QR etiketinin standart halinde pozisyonu ayrıştırmak
-        result_add_qr = g.add_qr(parts[0], parts[1], parts[2])
+        result_add_qr = graph_map.add_qr(parts[0], parts[1], parts[2])
         if result_add_qr == 0:
             mqtt_adapter.publish("QR is already in list", sub_qr_topic)
         else:
-            send_graph_status(g)
+            graph_map.send_graph_status(pub_topic)
 
-    def callback_for_corner(client,userdata,msg):
+    def callback_for_corner(client, userdata, msg):
+        global new_direction
         message = msg.payload.decode('utf-8')
         corner_type = message
-        result_add_node = add_node(g, corner_type)
+        last_qr = graph_map.get_last_qr()
+        corner = get_corner_data(corner_type, last_qr)
+        posx = corner[0]
+        posy = corner[1]
+        new_direction = corner[2]
+        unvisited_directions = corner[3]
+        result_add_node = graph_map.add_new_intersection(corner_type, posx, posy, unvisited_directions)
+        if not result_add_node:
+            same_node_id = graph_map.catch_same_node(posx, posy)
+            new_direction = graph_map.visit_unvisited_direction(same_node_id)
 
-        if result_add_node != str(0):
-            node_id = result
-            visit_unvisited_direction(node_id)
-
-        send_graph_status(g)  # Node değerlerini mqtt'ye göndermek
+        #######
+        #######
+        # if isThereUnvisitedAnymore == False:
+        mqtt_adapter.publish("mapping",
+                             lifecycle_pub_topic)  ## For the stop mapping state check how it is stop mapping state on lifecycle.py.run_mapping_mode()
+        graph_map.send_graph_status(pub_topic)
 
     mqtt_adapter.subscribe(sub_qr_topic, callback_for_qr)
     mqtt_adapter.subscribe(sub_corner_topic, callback_for_corner)
@@ -61,41 +73,8 @@ def main():
     mqtt_adapter.loop_forever()
 
 
-def visit_unvisited_direction(node_id):
-    global direction
-    node = g.get_node(node_id)
-    direction = node.del_unvisited_direction()
-
-
-def send_graph_status(graph):
-    json_graph = convert_json(graph)
-    db_graph_a.write(json_graph + "\n")
-    mqtt_adapter.publish(json_graph, pub_topic)
-
-
-def add_node(graph, corner_type):
-    global direction
-    past_node = graph.get_last_node()
-    last_qr = graph.get_last_qr()
-    corner = get_corner_data(corner_type, last_qr)
-    posx = corner[0]
-    posy = corner[1]
-    direction = corner[2]
-    unvisited_directions = corner[3]
-    result_check = graph.check_node_exist(posx, posy)
-    print(result_check)
-    if result_check == "none":
-        node_id = str(graph.num_of_nodes)
-        new_node = graph.add_node(node_id, posx, posy, corner_type, unvisited_directions)
-        graph.add_edge(past_node, new_node)
-        print(past_node.get_weight(new_node))
-        return str(0)
-    else:
-        return result_check
-
-
 def get_corner_data(corner_type, qr):
-    global direction
+    direction = imu_manager.get_direction()
     corner_actions = {
         "LEFT_L": {
             "N": (0, 10, "W"),
@@ -119,10 +98,10 @@ def get_corner_data(corner_type, qr):
             "E": (-10, 0, "E", ["S"]),
             "W": (10, 0, "W", ["N"]),
         },
-         "LEFT_T": {
-             "E": (-10, 0, "E", ["N"]),
-             "W": (10, 0, "W", ["S"]),
-         },
+        "LEFT_T": {
+            "E": (-10, 0, "E", ["N"]),
+            "W": (10, 0, "W", ["S"]),
+        },
     }
 
     unvisited_directions = []
@@ -139,3 +118,25 @@ def get_corner_data(corner_type, qr):
                 unvisited_directions = action[3]
 
     return posx, posy, new_direction, unvisited_directions
+
+
+def get_new_direction():
+    global new_direction
+    return new_direction
+
+
+class Mapping:
+    def __init__(self):
+        self.running = False
+        self.thread = None
+
+    def start(self):
+        if not self.running:
+            self.running = True
+            self.thread = threading.Thread(main())
+            self.thread.start()
+
+    def stop(self):
+        if self.running:
+            self.running = False
+            self.thread.join()

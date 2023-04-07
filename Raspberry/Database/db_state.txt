@@ -1,1 +1,4 @@
+
+idle
+explore
 explore
