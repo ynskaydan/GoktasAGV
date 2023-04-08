@@ -1,11 +1,12 @@
-from CrossCuttingConcerns import mqtt_adapter
-
+from CrossCuttingConcerns import mqtt_adapter, raspi_log
+import os
 direction = ""
 sub_topic = "imu"  # imu manager hem speed hem direction
 speed = ""
 
 
 def main():
+    raspi_log.log_process(str(f"Imu started! parent id: {os.getppid()},  self id: {os.getpid()}"))
     mqtt_adapter.connect()
     mqtt_adapter.subscribe(sub_topic, callback)
 

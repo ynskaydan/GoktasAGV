@@ -2,7 +2,7 @@ import os
 import threading
 
 import imu_manager
-from CrossCuttingConcerns import mqtt_adapter
+from CrossCuttingConcerns import mqtt_adapter, raspi_log
 from entities.Graph import Graph
 from graph_converter import read_database
 
@@ -19,20 +19,20 @@ lifecycle_pub_topic = "mode"
 
 
 def main():
-    print("Mapping started! parent id:", os.getppid(), " self id:", os.getpid())
+    raspi_log.log_process(str(f"Mapping started! parent id: {os.getppid()},  self id: {os.getpid()}"))
     graph_map = Graph()
     mqtt_adapter.connect("graph_map")
     result = read_database(db_graph_r, graph_map)
     if not result:
         graph_map.add_new_intersection("Start", 0, 0, {}, "S")
     if result:
-        print("Past data write on graph object")
+        raspi_log.log_process(str("Past data write on graph object"))
 
     def callback_for_obstacle(client, userdata, msg):
         last_node = graph_map.get_last_node()
         result_add_obstacle = graph_map.add_obstacle(last_node.get_pos_x(), 80)
         if result_add_obstacle == 0:
-            print("Obstacle already in list")
+            raspi_log.log_process(str("Obstacle already in list"))
         else:
             graph_map.send_graph_status(pub_topic)
 

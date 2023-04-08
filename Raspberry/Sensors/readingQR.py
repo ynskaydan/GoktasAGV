@@ -2,14 +2,14 @@ import cv2
 import datetime
 import os
 
-from CrossCuttingConcerns import mqtt_adapter
+from CrossCuttingConcerns import mqtt_adapter, raspi_log
 
 topic = "qr"
 time_old = datetime.datetime.now()
 
 
 def main():
-    print("Qr started! parent id:", os.getppid(), " self id:", os.getpid())
+    raspi_log.log_process(str(f"Qr started! parent id:, {os.getppid()},  self id:, {os.getpid()}"))
 
     olddata = ""
     mqtt_adapter.connect("qr")
@@ -32,7 +32,7 @@ def main():
             # cv2.putText(img, data, (int(bbox[0][0][0]), int(bbox[0][0][1]) - 10), cv2.FONT_HERSHEY_SIMPLEX,
             #          0.5, (0, 255, 0), 2)
             if data:
-                print("data found: ", data)
+                raspi_log.log_process(str(f"data found:  {data}"))
                 send_qr(data, olddata)
                 olddata = data
 

@@ -1,9 +1,9 @@
-from CrossCuttingConcerns import mqtt_adapter
+from CrossCuttingConcerns import mqtt_adapter, raspi_log
 from entities.Node import Node
 from entities.obstacle import Obstacle
 from entities.qr import QR
 from graph_converter import convert_json
-from mapping import db_graph_a
+
 
 
 class Graph:
@@ -17,9 +17,9 @@ class Graph:
         self.num_of_qr = 0
 
     def add_node(self, pos_x, pos_y, node_type, unvisited, node_id=None):
-
         node_exists = False
-        for node in self.nodes.keys():
+        for node_id in self.nodes.keys():
+            node = self.get_node(node_id)
             if node.get_pos_x() == pos_x and node.get_pos_y() == pos_y:
                 node_exists = True
                 break
@@ -39,7 +39,7 @@ class Graph:
             self.qr_list[id] = new_qr
             return new_qr
         else:
-            print(f"QR {qr_id} has already in list")
+            raspi_log.log_process(str(f"QR {qr_id} has already in list"))
             return 0
 
     def add_obstacle(self, pos_x, pos_y):

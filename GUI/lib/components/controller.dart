@@ -19,7 +19,7 @@ class Controller extends StatefulWidget {
 
 class _ControllerState extends State<Controller> {
   final client = UniversalMqttClient(
-    broker: Uri.parse('ws://localhost:8080'),
+    broker: Uri.parse('ws://192.168.1.101:8080'),
     autoReconnect: true,
   );
   void initState() {
@@ -46,14 +46,14 @@ class _ControllerState extends State<Controller> {
 
   int a = 0;
   int b = 0;
-
+  String pubTopic = "move";
   String text = "No Sended Message";
 
   void _moveForward() {
     if (_isButtonOn) {
       setState(() {
         y++;
-        client.publishString(pubTopic, 'posy: ${y.toString()} move forward',
+        client.publishString(pubTopic, 'w',
             MqttQos.atLeastOnce);
         print('pos(x,y): (${x.toString()},${y.toString()}) | MOVE FORWARD');
       });
@@ -64,7 +64,7 @@ class _ControllerState extends State<Controller> {
     if (_isButtonOn) {
       setState(() {
         y--;
-        client.publishString(pubTopic, 'posy: ${y.toString()} move backward',
+        client.publishString(pubTopic, 's',
             MqttQos.atLeastOnce);
         print('pos(x,y): (${x.toString()},${y.toString()}) | MOVE BACKWARD');
       });
@@ -76,7 +76,7 @@ class _ControllerState extends State<Controller> {
       setState(() {
         x++;
         client.publishString(
-            pubTopic, 'posx: ${x.toString()} move right', MqttQos.atLeastOnce);
+            pubTopic, 'd', MqttQos.atLeastOnce);
         print('pos(x,y): (${x.toString()},${y.toString()}) | MOVE RIGHT');
       });
     }
@@ -89,7 +89,7 @@ class _ControllerState extends State<Controller> {
         print('pos(x,y): (${x.toString()},${y.toString()}) | MOVE LEFT');
       });
       client.publishString(
-          pubTopic, 'posx: ${x.toString()} move left', MqttQos.atLeastOnce);
+          pubTopic, 'a', MqttQos.atLeastOnce);
     }
   }
 
@@ -97,7 +97,7 @@ class _ControllerState extends State<Controller> {
     setState(() {
       client.publishString(
           pubTopic,
-          'pos(x,y): (${x.toString()},${y.toString()}), engine stopped',
+          'e',
           MqttQos.atLeastOnce);
       print('pos(x,y): (${x.toString()},${y.toString()}) | ENGINE STOPPED');
     });

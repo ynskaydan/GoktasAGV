@@ -12,7 +12,7 @@ var mappingState = false;
 var mappingStateTopic = "mappingState";
 List<Node> nodes = [];
 List<QR> qrs = [];
-List<Obstacles> obstacles = [];
+//List<Obstacles> obstacles = [];
 
 class Mapper extends StatefulWidget {
   Mapper({super.key});
@@ -40,7 +40,7 @@ class _MapperState extends State<Mapper> {
       Graph graph = Graph.fromJson(jsonDecode(message));
       nodes = graph.nodes;
       qrs = graph.qr;
-      obstacles = graph.obstacles;
+     // obstacles = graph.obstacles;
     });
   }
 
@@ -58,7 +58,7 @@ class _MapperState extends State<Mapper> {
           painter: MapPainter(
               nodes,
               qrs,
-              obstacles,
+              //obstacles,
               MediaQuery.of(context).size.width / 2,
               MediaQuery.of(context).size.height / 2.5 + 40),
         ),
@@ -70,12 +70,12 @@ class _MapperState extends State<Mapper> {
 class MapPainter extends CustomPainter {
   final List<Node> nodes;
   final List<QR> qrs;
-  final List<Obstacles> obstacles;
+  //final List<Obstacles> obstacles;
   final double scaleX;
   final double scaleY;
 
   const MapPainter(
-      this.nodes, this.qrs, this.obstacles, this.scaleX, this.scaleY);
+      this.nodes, this.qrs,/* this.obstacles,*/ this.scaleX, this.scaleY);
 
   @override
   Future<void> paint(Canvas canvas, Size size) async {
@@ -122,15 +122,15 @@ class MapPainter extends CustomPainter {
       double b = scaleY - (coefficient * y);
       canvas.drawCircle(Offset(a, b), radius, qrPaint);
     }
-    for (final obs in obstacles) {
-      final pos = obs.pos;
-      final x = pos["x"] as double;
-      final y = pos["y"] as double;
-      double a = scaleX - (coefficient * x);
-      double b = scaleY - (coefficient * y);
-      Rect rect = Rect.fromLTWH(a, b, 3, 12);
-      canvas.drawRect(rect, obstaclePaint);
-    }
+    // for (final obs in obstacles) {
+    //   final pos = obs.pos;
+    //   final x = pos["x"] as double;
+    //   final y = pos["y"] as double;
+    //   double a = scaleX - (coefficient * x);
+    //   double b = scaleY - (coefficient * y);
+    //   Rect rect = Rect.fromLTWH(a, b, 3, 12);
+    //   canvas.drawRect(rect, obstaclePaint);
+    // }
     // Draw the connections between the nodes
     for (final node in nodes) {
       final pos = node.pos;

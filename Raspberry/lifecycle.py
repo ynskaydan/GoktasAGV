@@ -1,5 +1,5 @@
 import mapping
-from CrossCuttingConcerns import mqtt_adapter
+from CrossCuttingConcerns import mqtt_adapter, raspi_log
 
 db_state_a = open("./Database/db_state.txt", "a")
 db_state_r = open("./Database/db_state.txt", "r")
@@ -12,12 +12,13 @@ DUTY_STATE = "DUTY_STATE"
 
 state = IDLE_STATE
 
+
 def main():
     global state
     lines = db_state_r.readlines()
     if len(lines) > 0:
         state = str(lines[len(lines) - 1])
-        print(state)
+        raspi_log.log_process(state)
     else:
         state = IDLE_STATE  # idle
 
@@ -29,27 +30,28 @@ def main():
 
 def run_explore_mode():
     global state
+    mapping_mode = mapping.Mapping()
     if state == IDLE_STATE:
         state = MAPPING_STATE
-        print("Mapping active")
+        raspi_log.log_process("Mapping Active")
         save_last_state()
-        mapping.Mapping.start()
-    elif state == MAPPING_STATE:
-        mapping.Mapping.stop()
-        state = IDLE_STATE
+        mapping_mode.start()
 
+    elif state == MAPPING_STATE:
+        mapping_mode.stop()
+        state = IDLE_STATE
 
 
 def run_duty_mode():
     global state
     state = DUTY_STATE
-    #import_load.start()
-    print("Duty active")
+    # import_load.start()
+    raspi_log.log_process("Duty Active")
     save_last_state()
 
 
 def run_idle_mode():
-    print("Idle mode active. Waiting for followings")
+    raspi_log.log_process("Idle mode active. Waiting for followings orders")
     save_last_state()
 
 
@@ -61,17 +63,18 @@ def on_message(client, userdata, msg):
 def run_import_mode():
     save_last_state()
     try:
-        print("importing")
-    except AssertionError:
-        print("Cannot start a process twitce")
+        raspi_log.log_process("importing")
+
+    except:
+        raspi_log.log_process(str(BaseException))
 
 
 def run_export_mode():
     save_last_state()
     try:
-        print("exporting")
+        raspi_log.log_process("exporting")
     except AssertionError:
-        print("Cannot start a process twitce")
+        raspi_log.log_process(str("Cannot start a process twitce"))
 
 
 def take_order(message):

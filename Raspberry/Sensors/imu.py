@@ -3,6 +3,7 @@ import math
 import time
 import datetime
 
+from CrossCuttingConcerns import raspi_log
 
 address = 0x68
 bus = smbus2.SMBus(1)
@@ -103,12 +104,11 @@ while True:
     vz = z_acc - diff_time
     speed = math.sqrt(vx*vx + vy*vy + vz*vz)
     # Sonuçları yazdırma
-    print("Pusula Yönü:", bearing)
-    print("X İvme:", x_acc)
-    print("Y İvme:", y_acc)
-    print("Z İvme:", z_acc)
-    print("Speed", speed)
+    raspi_log.log_process(str(f"Pusula Yönü: {bearing}"))
+    raspi_log.log_process(str(f"X İvme:  x_acc"))
+    raspi_log.log_process(str("Y İvme y_acc"))
+    raspi_log.log_process(str("Z İvme: z_acc"))
+    raspi_log.log_process(str("Speed speed"))
     print("====== end of iteration =======")
-    print("")
     time.sleep(1)
     time_old = datetime.datetime.now().second

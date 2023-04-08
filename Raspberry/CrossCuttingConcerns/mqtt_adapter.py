@@ -1,5 +1,14 @@
+import datetime
+import os
+
 from paho.mqtt import client as mqtt_client
 
+
+
+pub_topic = "raspi-log"
+dir_path = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(os.path.dirname(dir_path), 'Database', 'db_logs.txt')
+db_logs = open(file_path, "a")
 
 def connect(id):
     global client
@@ -13,11 +22,14 @@ def connect(id):
     client.username_pw_set(username, password)
 
     def on_connect(client, userdata, flags, rc):
+        now = datetime.datetime.now()
         if rc == 0:
-            print(f"Connected to MQTT Broker from client {client_id}")
+            result = str(f"{now.hour}:{now.minute}:{now.second} Connected to MQTT Broker by  {client_id}")
+            log(result)
             return True
         else:
-            print("Failed to connect ", rc)
+            result = str(f"{now.hour}:{now.minute}:{now.second} Failed to connect  {rc}")
+            log(result)
             return False
 
     client.on_connect = on_connect
@@ -26,19 +38,27 @@ def connect(id):
 
 
 def publish(message, topic):
+    resultx = ""
+    now = datetime.datetime.now()
     result = client.publish(topic, message)
     status = result[0]
     if status == 0:
-        print(f"Message '{message}' sent to topic '{topic}' cid: {client.client_id}")
+        resultx = str(
+            f"{now.hour}:{now.minute}:{now.second} Message '{message}' sent to topic '{topic}' cid: {client.client_id}")
+
     else:
-        print(f"Failed to send message to topic {topic} cid: {client.client_id}")
+        resultx = str(f"{now.hour}:{now.minute}:{now.second} Failed to send message to topic {topic} cid: {client.client_id}")
+
+    print(resultx)
+    db_logs.write(resultx)
 
 
 def subscribe(topic, callback):
-
+    now = datetime.datetime.now()
     client.subscribe(topic)
     client.message_callback_add(topic, callback)
-    print(f"Subscribed to {topic}")
+    result = str(f"{now.hour}:{now.minute}:{now.second} Subscribed to {topic}")
+    log(result)
 
 
 def loop_forever():
@@ -47,3 +67,9 @@ def loop_forever():
 
 def loop():
     client.loop()
+
+def log(message):
+    print(message)
+    publish(message, pub_topic)
+    db_logs.write(str("\n"+ message))
+
