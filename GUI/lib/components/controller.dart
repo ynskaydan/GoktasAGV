@@ -275,7 +275,7 @@ class _ControllerState extends State<Controller> {
           setState(() {
             _isButtonOn = !_isButtonOn;
             _buttonColor = _isButtonOn ? Colors.green : Colors.red;
-            print("Manuel Kontrol Durumu: $_isButtonOn");
+            // print("Manuel Kontrol Durumu: $_isButtonOn");
           });
         },
         style: ElevatedButton.styleFrom(
