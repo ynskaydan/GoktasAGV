@@ -70,7 +70,7 @@ class _EntrySenarioState extends State<EntrySenario> {
         ),
         SizedBox(width: 10),
         ElevatedButton(
-          onPressed: mappingState ? null : _sendSenario,
+          onPressed: mappingState ? _sendSenario : null,
           child: SizedBox(
               height: 50,
               child: Center(

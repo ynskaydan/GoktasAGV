@@ -58,12 +58,11 @@ class Mapping:
             #######
             #######
             # if isThereUnvisitedAnymore == False:
-        mqtt_adapter.publish("mapping",
-                             lifecycle_pub_topic)  ## For the stop mapping state check how it is stop mapping state on lifecycle.py.run_mapping_mode()
         self.graph_map.send_graph_status(pub_topic)
 
     def callback_for_finish(self, client, userdata, msg):
-        print("sa")
+        mqtt_adapter.publish("mapping",
+                             lifecycle_pub_topic)  ## For the stop mapping state check how it is stop mapping state on lifecycle.py.run_mapping_mode()
 
     @staticmethod
     def get_corner_data(corner_type, qr):

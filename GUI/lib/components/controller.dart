@@ -17,9 +17,10 @@ class Controller extends StatefulWidget {
   State<Controller> createState() => _ControllerState();
 }
 
+//192.168.1.101:8080
 class _ControllerState extends State<Controller> {
   final client = UniversalMqttClient(
-    broker: Uri.parse('ws://192.168.1.101:8080'),
+    broker: Uri.parse('ws://localhost:8080'),
     autoReconnect: true,
   );
   void initState() {
@@ -53,8 +54,7 @@ class _ControllerState extends State<Controller> {
     if (_isButtonOn) {
       setState(() {
         y++;
-        client.publishString(pubTopic, 'w',
-            MqttQos.atLeastOnce);
+        client.publishString(pubTopic, 'w', MqttQos.atLeastOnce);
         print('pos(x,y): (${x.toString()},${y.toString()}) | MOVE FORWARD');
       });
     }
@@ -64,8 +64,7 @@ class _ControllerState extends State<Controller> {
     if (_isButtonOn) {
       setState(() {
         y--;
-        client.publishString(pubTopic, 's',
-            MqttQos.atLeastOnce);
+        client.publishString(pubTopic, 's', MqttQos.atLeastOnce);
         print('pos(x,y): (${x.toString()},${y.toString()}) | MOVE BACKWARD');
       });
     }
@@ -75,8 +74,7 @@ class _ControllerState extends State<Controller> {
     if (_isButtonOn) {
       setState(() {
         x++;
-        client.publishString(
-            pubTopic, 'd', MqttQos.atLeastOnce);
+        client.publishString(pubTopic, 'd', MqttQos.atLeastOnce);
         print('pos(x,y): (${x.toString()},${y.toString()}) | MOVE RIGHT');
       });
     }
@@ -88,18 +86,35 @@ class _ControllerState extends State<Controller> {
         x--;
         print('pos(x,y): (${x.toString()},${y.toString()}) | MOVE LEFT');
       });
-      client.publishString(
-          pubTopic, 'a', MqttQos.atLeastOnce);
+      client.publishString(pubTopic, 'a', MqttQos.atLeastOnce);
     }
   }
 
   void _stopEngine() {
     setState(() {
-      client.publishString(
-          pubTopic,
-          'e',
-          MqttQos.atLeastOnce);
+      client.publishString(pubTopic, 'e', MqttQos.atLeastOnce);
       print('pos(x,y): (${x.toString()},${y.toString()}) | ENGINE STOPPED');
+    });
+  }
+
+  void _forwardLinearActuator() {
+    setState(() {
+      client.publishString(pubTopic, 't', MqttQos.atLeastOnce);
+      print('LINEAR ACTUATOR FORWARD');
+    });
+  }
+
+  void _backwardLinearActuator() {
+    setState(() {
+      client.publishString(pubTopic, 'u', MqttQos.atLeastOnce);
+      print('LINEAR ACTUATOR BACKWARD');
+    });
+  }
+
+  void _stopLinearActuator() {
+    setState(() {
+      client.publishString(pubTopic, 'y', MqttQos.atLeastOnce);
+      print('LINEAR ACTUATOR STOPPED');
     });
   }
 
@@ -120,6 +135,15 @@ class _ControllerState extends State<Controller> {
           break;
         case 911:
           _stopEngine();
+          break;
+        case 4:
+          _forwardLinearActuator();
+          break;
+        case 5:
+          _backwardLinearActuator();
+          break;
+        case 6:
+          _stopLinearActuator();
           break;
       }
     });
@@ -184,9 +208,68 @@ class _ControllerState extends State<Controller> {
     );
   }
 
+  Widget linearActuator({
+    required int direction,
+    required Icon icon,
+  }) {
+    bool isPressed = isPressedMap[direction] ?? false;
+    return Container(
+      height: 50,
+      width: 50,
+      decoration: BoxDecoration(
+        color: isPressed
+            ? Colors.grey
+            : _isButtonOn
+                ? Constant.directionGrey
+                : Colors.black12, // arka plan rengi değiştirildi
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: isPressed
+                ? Colors.white
+                : _isButtonOn
+                    ? Constant.boxShadowLeft
+                    : Colors.transparent,
+            offset: isPressed ? Offset(3, 3) : Offset(-3, -3),
+            blurRadius: 8,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Center(
+          child: GestureDetector(
+        onTapDown: (details) {
+          setState(() {
+            if (_isButtonOn) {
+              isPressedMap[direction] = true;
+              _sender(direction);
+            }
+          });
+        },
+        onTapUp: (details) {
+          setState(() {
+            if (_isButtonOn) {
+              isPressedMap[direction] = false;
+              _sender(6);
+            }
+          });
+        },
+        onTapCancel: () {
+          setState(() {
+            if (_isButtonOn) {
+              isPressedMap[direction] = false;
+              _sender(6);
+            }
+          });
+        },
+        child: icon,
+      )),
+    );
+  }
+
   Widget controllerButton() {
     return Container(
-      width: MediaQuery.of(context).size.width / 20,
+      width: MediaQuery.of(context).size.width / 24,
       child: ElevatedButton(
         onPressed: () {
           setState(() {
@@ -270,6 +353,14 @@ class _ControllerState extends State<Controller> {
                   ? "assets/images/right.png"
                   : "assets/images/right_disable.png",
             ),
+            const SizedBox(width: 15),
+            linearActuator(
+                direction: 4, icon: Icon(Icons.arrow_circle_up_sharp)),
+            const SizedBox(width: 15),
+            linearActuator(
+                direction: 5, icon: Icon(Icons.arrow_circle_down_sharp)),
+            const SizedBox(width: 15),
+            linearActuator(direction: 6, icon: Icon(Icons.stop_circle_sharp)),
           ],
         ),
       ],

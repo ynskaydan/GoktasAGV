@@ -7,8 +7,6 @@ import 'dart:ui' as ui;
 
 import '../entity/graph.dart';
 
-var mappingState = false;
-
 var mappingStateTopic = "mappingState";
 List<Node> nodes = [];
 List<QR> qrs = [];
@@ -40,7 +38,7 @@ class _MapperState extends State<Mapper> {
       Graph graph = Graph.fromJson(jsonDecode(message));
       nodes = graph.nodes;
       qrs = graph.qr;
-     // obstacles = graph.obstacles;
+      // obstacles = graph.obstacles;
     });
   }
 
@@ -48,7 +46,7 @@ class _MapperState extends State<Mapper> {
   Widget build(BuildContext context) {
     return Container(
       decoration:
-          BoxDecoration(color: Colors.white, border: Border.all(width: 10)),
+          BoxDecoration(color: Colors.white24, border: Border.all(width: 10)),
       child: SizedBox(
         width: MediaQuery.of(context).size.width / 2,
         height: MediaQuery.of(context).size.height / 2.5 + 40,
@@ -75,7 +73,7 @@ class MapPainter extends CustomPainter {
   final double scaleY;
 
   const MapPainter(
-      this.nodes, this.qrs,/* this.obstacles,*/ this.scaleX, this.scaleY);
+      this.nodes, this.qrs, /* this.obstacles,*/ this.scaleX, this.scaleY);
 
   @override
   Future<void> paint(Canvas canvas, Size size) async {

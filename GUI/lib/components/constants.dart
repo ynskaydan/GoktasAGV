@@ -4,6 +4,7 @@ import 'package:universal_mqtt_client/universal_mqtt_client.dart';
 
 import 'mapping.dart';
 
+var mappingState = false;
 Map<int, bool> isPressedMap = {
   0: false,
   1: false,
