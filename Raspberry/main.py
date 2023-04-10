@@ -21,9 +21,11 @@ def main():
     process_qr.start()
 
 
+
     process_qr.join()
     process_heartbit.join()
     process_life_cycle.join()
+
 
 
 if __name__ == '__main__':

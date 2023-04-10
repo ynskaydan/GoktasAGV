@@ -3,18 +3,18 @@ import os
 
 from paho.mqtt import client as mqtt_client
 
-
-
 pub_topic = "raspi-log"
 dir_path = os.path.dirname(os.path.abspath(__file__))
 file_path = os.path.join(os.path.dirname(dir_path), 'Database', 'db_logs.txt')
 db_logs = open(file_path, "a")
 
-def connect(id):
+
+def connect(cid):
     global client
-    broker = "localhost"
+
+    broker = "192.168.1.101"
     port = 1883
-    client_id = f'mqtt-raspberry-{id}'
+    client_id = f'mqtt-raspberry-{cid}'
     username = 'goktas'
     password = '12345678'
 
@@ -24,7 +24,7 @@ def connect(id):
     def on_connect(client, userdata, flags, rc):
         now = datetime.datetime.now()
         if rc == 0:
-            result = str(f"{now.hour}:{now.minute}:{now.second} Connected to MQTT Broker by  {client_id}")
+            result = str(f"{now.hour}:{now.minute}:{now.second} Connected to MQTT Broker by  {client.client_id}")
             log(result)
             return True
         else:
@@ -38,7 +38,6 @@ def connect(id):
 
 
 def publish(message, topic):
-    resultx = ""
     now = datetime.datetime.now()
     result = client.publish(topic, message)
     status = result[0]
@@ -47,7 +46,8 @@ def publish(message, topic):
             f"{now.hour}:{now.minute}:{now.second} Message '{message}' sent to topic '{topic}' cid: {client.client_id}")
 
     else:
-        resultx = str(f"{now.hour}:{now.minute}:{now.second} Failed to send message to topic {topic} cid: {client.client_id}")
+        resultx = str(
+            f"{now.hour}:{now.minute}:{now.second} Failed to send message to topic {topic} cid: {client.client_id}")
 
     print(resultx)
     db_logs.write(resultx)
@@ -68,8 +68,8 @@ def loop_forever():
 def loop():
     client.loop()
 
+
 def log(message):
     print(message)
     publish(message, pub_topic)
-    db_logs.write(str("\n"+ message))
-
+    db_logs.write(str("\n" + message))
