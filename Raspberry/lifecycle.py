@@ -10,7 +10,6 @@ sub_obstacle_topic = "obstacle"
 sub_qr_topic = "qr"
 pub_topic = "mapping"
 
-
 IDLE_STATE = "IDLE_STATE"
 MAPPING_STATE = "MAPPING_STATE"
 DUTY_STATE = "DUTY_STATE"
@@ -46,11 +45,7 @@ def run_explore_mode():
         state = MAPPING_STATE
         raspi_log.log_process("Mapping Active")
         save_last_state()
-        mapping_mode.start()
-
-    elif state == MAPPING_STATE:
-        mapping_mode.stop()
-        state = IDLE_STATE
+        mapping_mode = mapping.Mapping()
 
 
 def run_duty_mode():
