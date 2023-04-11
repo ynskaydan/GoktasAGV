@@ -148,11 +148,11 @@ class _MainButtonsState extends State<MainButtons> {
                 SizedBox(
                   width: 20,
                 ),
-                ElevatedButton(
+                /* ElevatedButton(
                     onPressed: () {
                       _startTheMapping();
                     },
-                    child: Text("Buton")),
+                    child: Text("Buton")), */
                 SizedBox(
                   width: 20,
                 ),
@@ -164,11 +164,11 @@ class _MainButtonsState extends State<MainButtons> {
                 SizedBox(
                   width: 20,
                 ),
-                ElevatedButton(
+                /*   ElevatedButton(
                     onPressed: () {
                       _stopTheMapping();
                     },
-                    child: Text("Bitir!")),
+                    child: Text("Bitir!")), */
               ],
             ),
           ),

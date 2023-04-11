@@ -26,6 +26,8 @@ class _EntrySenarioState extends State<EntrySenario> {
     super.initState();
   }
 
+  String pubTopic = "scenario";
+  String subTopic = "subScenario";
   void connectionSenario() async {
     //print("connection");
     //client.status.listen((status) {
@@ -33,8 +35,6 @@ class _EntrySenarioState extends State<EntrySenario> {
     //});
     await client.connect();
   }
-
-  String pubTopic = "senario";
 
   void _sendSenario() {
     setState(() {
