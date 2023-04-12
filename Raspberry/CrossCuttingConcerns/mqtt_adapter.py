@@ -65,10 +65,6 @@ def loop_forever():
     client.loop_forever()
 
 
-def loop():
-    client.loop()
-
-
 def log(message):
     print(message)
     publish(message, pub_topic)

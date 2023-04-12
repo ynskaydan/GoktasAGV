@@ -43,7 +43,7 @@ class _ControllerState extends State<Controller> {
   }
 
   Color _buttonColor = Colors.red;
-  bool _isButtonOn = true;
+  bool _isButtonOn = false;
 
   int a = 0;
   int b = 0;

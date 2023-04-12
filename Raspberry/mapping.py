@@ -1,20 +1,21 @@
 import os
+from Raspberry.graph_converter import convert_json
 
 import imu_manager
 from CrossCuttingConcerns import mqtt_adapter, raspi_log
 from entities.Graph import Graph
 from graph_converter import read_database
-from lifecycle import pub_topic, sub_qr_topic
+import arduino_manager
 
 db_graph_a = open("./Database/db_graph.txt", "a")
 db_graph_r = open("./Database/db_graph.txt", "r")
 
 new_direction = ""
-lifecycle_pub_topic = "mode"
-
-
+isPathFollowing = False 
+pub_topic = "mapping"
 class Mapping:
-    def __init__(self):
+    def __init__(self, finish_callback):
+        self.finish_callback = finish_callback
         raspi_log.log_process(str(f"Mapping started! parent id: {os.getppid()},  self id: {os.getpid()}"))
         self.graph_map = Graph()
         result = read_database(db_graph_r, self.graph_map)
@@ -22,8 +23,9 @@ class Mapping:
             self.graph_map.add_new_intersection("Start", 0, 0, {}, "S")
         if result:
             raspi_log.log_process(str("Past data write on graph object"))
-
-    def callback_for_obstacle(self, client, userdata, msg):
+           
+    def callback_for_obstacle(self, msg):
+        message = msg.payload.decode('utf-8')
         last_node = self.graph_map.get_last_node()
         result_add_obstacle = self.graph_map.add_obstacle(last_node.get_pos_x(), 80)
         if result_add_obstacle == 0:
@@ -31,7 +33,7 @@ class Mapping:
         else:
             self.graph_map.send_graph_status(pub_topic)
 
-    def callback_for_qr(self, client, userdata, msg):
+    def callback_for_qr(self, msg):
         message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
         parts = message.split(";")  # QR etiketinin standart halinde pozisyonu ayrıştırmak
         result_add_qr = self.graph_map.add_qr(parts[0], parts[1], parts[2])
@@ -40,8 +42,8 @@ class Mapping:
         else:
             self.graph_map.send_graph_status(pub_topic)
 
-    def callback_for_corner(self, client, userdata, msg):
-        global new_direction
+    def callback_for_corner(self, msg):
+        global new_direction, isPathFollowing
         message = msg.payload.decode('utf-8')
         corner_type = message
         last_qr = self.graph_map.get_last_qr()
@@ -50,20 +52,49 @@ class Mapping:
         posy = corner[1]
         new_direction = corner[2]
         unvisited_directions = corner[3]
-        result_add_node = self.graph_map.add_new_intersection(corner_type, posx, posy, unvisited_directions)
-        if not result_add_node:
-            same_node_id = self.graph_map.catch_same_node(posx, posy)
-            new_direction = self.graph_map.visit_unvisited_direction(same_node_id)
+        
+       
+        if isPathFollowing:
+            # find position of current node from qrs
+            if (positionOfCurrentNode equals positionOfTargetNode):
+                # path following finished
+                self.setPathFollowingFlag(False)
+                # after following path, the vehichle is on nodeWithUnvisited
+                turnToUnvisitedDirectionOfTheNodeWithUnvisited()
+                arduino_manager.stop_autonomous_motion_of_vehicle()
+            elif msg == "T":
+                direction = requiredDirectionTo(currentNode, nextNode)
+                turnVehicle(direction) # direct arduino
+            return
+        
 
-            #######
-            #######
-            # if isThereUnvisitedAnymore == False:
+        check_node_exist = self.graph_map.check_node_already_exist(posx,posy)
+        
+        
+        if check_node_exist:
+            already_visited_node = self.graph_map.already_visited_node(posx,posy)
+            
+            arduino_manager.stop_autonomous_motion_of_vehicle()
+            nodesWithUnvisited = self.graph_map.nodes_having_unvisited_direction()
+            if nodesWithUnvisited.count == 0:
+                # finished mapping
+                self.finish_callback()
+                return
+            node_with_unvisited = self.graph_map.get_node(nodesWithUnvisited[0])
+            path = findPath(already_visited_node, node_with_unvisited)
+            startFollowPath(path)
+        else:
+            self.graph_map.add_new_intersection(corner_type, posx, posy, unvisited_directions)
+            
+        
+            
         self.graph_map.send_graph_status(pub_topic)
 
-    def callback_for_finish(self, client, userdata, msg):
-        mqtt_adapter.publish("mapping",
-                             lifecycle_pub_topic)  ## For the stop mapping state check how it is stop mapping state on lifecycle.py.run_mapping_mode()
-
+    def setPathFollowingFlag(self,bool):
+        global isPathFollowing
+        isPathFollowing = bool
+        
+        
     @staticmethod
     def get_corner_data(corner_type, qr):
         direction = imu_manager.get_direction()
@@ -115,3 +146,8 @@ class Mapping:
     def get_new_direction():
         global new_direction
         return new_direction
+    
+    def send_graph_status(self, pub_topic):
+        json_graph = convert_json(self)
+        db_graph_a.write(json_graph + "\n")
+        mqtt_adapter.publish(json_graph, pub_topic)
