@@ -16,21 +16,12 @@ class Graph:
         self.num_of_obstacle = 0
         self.num_of_qr = 0
 
-    def add_node(self, pos_x, pos_y, node_type, unvisited, node_id=None):
-        node_exists = False
-        for node_id in self.nodes.keys():
-            node = self.get_node(node_id)
-            if node.get_pos_x() == pos_x and node.get_pos_y() == pos_y:
-                node_exists = True
-                break
-
-        if not node_exists:
-            self.num_of_nodes += 1
-            new_node = Node(pos_x, pos_y, node_type, unvisited, node_id or str(self.num_of_nodes))
-            self.nodes[new_node.get_id()] = new_node
-            return new_node
-        else:
-            return None
+    def add_node(self, pos_x, pos_y, node_type, unvisited, node_id=None): 
+        self.num_of_nodes += 1
+        new_node = Node(pos_x, pos_y, node_type, unvisited, node_id or str(self.num_of_nodes))
+        self.nodes[new_node.get_id()] = new_node
+        return new_node
+   
 
     def add_qr(self, qr_id, posx, posy):
         self.num_of_qr += 1
@@ -74,7 +65,8 @@ class Graph:
 
     def get_node(self, node_id):
         if node_id in self.nodes.keys():
-            return self.nodes[node_id]
+            
+            return self.nodes.get(node_id)
         else:
             return 0
 
@@ -98,28 +90,28 @@ class Graph:
     def add_new_intersection(self, corner_type, posx, posy, unvisited_directions, node_id=None):
         past_node = self.get_last_node()
         new_node = self.add_node(posx, posy, corner_type, unvisited_directions, node_id)
-        if new_node != str(0):
-            self.add_edge(past_node, new_node)
-            return True
-        else:
-            return False
+        self.add_edge(past_node, new_node)
 
     def visit_unvisited_direction(self, node_id):
         node = self.get_node(node_id)
         new_direction = node.del_unvisited_direction()
         return new_direction
 
-    def catch_same_node(self, posx, posy):
+    def already_visited_node(self, posx, posy):
         for node_id in self.nodes.keys():
             node = self.get_node(node_id)
             if node.get_pos_x() == int(posx) and node.get_pos_y() == int(posy):
-                return node_id
+                return node
         return None
 
-    def send_graph_status(self, pub_topic):
-        json_graph = convert_json(self)
-        db_graph_a.write(json_graph + "\n")
-        mqtt_adapter.publish(json_graph, pub_topic)
+    def check_node_already_exist(self,pos_x,pos_y):
+        node_exists = False
+        for node_id in self.nodes.keys():
+            node = self.get_node(node_id)
+            if node.get_pos_x() == pos_x and node.get_pos_y() == pos_y:
+                node_exists = True
+                break
+        return node_exists
 
     def get_last_qr(self):
         key_list = list(self.qr_list.keys())
@@ -127,3 +119,11 @@ class Graph:
         last_qr = self.get_qr(last_key)
 
         return last_qr
+    
+    def nodes_having_unvisited_direction(self):
+        nodes_having_unvisited = []
+        for node_id in self.nodes.keys:
+            node = self.get_node(node_id)
+            if node.get_unvisited_directions() > 0:
+                nodes_having_unvisited.append(node_id)
+        return nodes_having_unvisited

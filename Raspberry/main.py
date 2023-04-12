@@ -20,7 +20,12 @@ def main():
     # process_obstacle.start()
     process_qr.start()
 
-
+    while (!allProcessesReady)
+        # empty
+    
+    # above loop keep the process busy until all processes ready
+    
+    sendReadyMessage()
 
     process_qr.join()
     process_heartbit.join()
