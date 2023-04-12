@@ -1,17 +1,17 @@
 import heartbeat
 import lifecycle
-from Helpers import configure_ip
+from Helpers import ip_helper
 import multiprocessing
-from Sensors import obstacle_detection, readingQR_second#,readingQR
+from Sensors import obstacle_detection, readingQR  # ,readingQR
 
 
 def main():
-    process_setup_ip = multiprocessing.Process(target=configure_ip.setup_ip())
+    process_setup_ip = multiprocessing.Process(target=ip_helper.setup_ip)
     process_life_cycle = multiprocessing.Process(target=lifecycle.main)
 
-    process_qr = multiprocessing.Process(target=readingQR_second.main)
+    process_qr = multiprocessing.Process(target=readingQR.main)
     process_heartbit = multiprocessing.Process(target=heartbeat.send_heartbeat)
-    process_obstacle = multiprocessing.Process(target=obstacle_detection.main)
+    # process_obstacle = multiprocessing.Process(target=obstacle_detection.main)
 
     process_setup_ip.start()  # setup ip for connecting access point
     process_setup_ip.join()
@@ -20,17 +20,16 @@ def main():
     # process_obstacle.start()
     process_qr.start()
 
-    while (!allProcessesReady)
-        # empty
-    
+    # while (!allProcessesReady)
+    # empty
+
     # above loop keep the process busy until all processes ready
-    
-    sendReadyMessage()
+
+    # sendReadyMessage()
 
     process_qr.join()
     process_heartbit.join()
     process_life_cycle.join()
-
 
 
 if __name__ == '__main__':

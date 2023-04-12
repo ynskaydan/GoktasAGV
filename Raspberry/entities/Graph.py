@@ -92,8 +92,7 @@ class Graph:
         new_node = self.add_node(posx, posy, corner_type, unvisited_directions, node_id)
         self.add_edge(past_node, new_node)
 
-    def visit_unvisited_direction(self, node_id):
-        node = self.get_node(node_id)
+    def visit_unvisited_direction(self, node):
         new_direction = node.del_unvisited_direction()
         return new_direction
 

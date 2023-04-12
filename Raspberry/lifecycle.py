@@ -38,7 +38,7 @@ def main():
     else:
         state = IDLE_STATE  # idle
         
-    mapping_mode = mapping.Mapping()
+    mapping_mode = mapping.Mapping(finishCallback)
 
     mqtt_adapter.connect("md")
     mqtt_adapter.subscribe(topic, on_message)
@@ -120,4 +120,4 @@ def get_last_state():
 
 
 
-mqtt_adapter.loop_forever()
+

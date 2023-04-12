@@ -12,6 +12,6 @@ def send_heartbeat():
     message = "heartbeat"
     mqtt_adapter.connect("hb")
     while True:
-        mqtt_adapter.loop()
         mqtt_adapter.publish(message,topic)
         time.sleep(0.5)  # 5 saniye bekleme
+        mqtt_adapter.loop()

@@ -10,9 +10,9 @@ time_old = datetime.datetime.now()
 
 def main():
     raspi_log.log_process(str(f"Qr started! parent id:, {os.getppid()},  self id:, {os.getpid()}"))
-
-    olddata = ""
     mqtt_adapter.connect("qr")
+    olddata = ""
+
     # set up camera objects
     cap = cv2.VideoCapture(0)
     # QR code detection object
