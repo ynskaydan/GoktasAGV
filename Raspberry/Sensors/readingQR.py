@@ -2,7 +2,7 @@ import cv2
 import datetime
 import os
 
-from CrossCuttingConcerns import mqtt_adapter, raspi_log
+from CrossCuttingConcerns import raspi_log, mqtt_adapter
 
 topic = "qr"
 time_old = datetime.datetime.now()

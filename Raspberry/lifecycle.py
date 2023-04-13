@@ -1,4 +1,3 @@
-
 from CrossCuttingConcerns import mqtt_adapter, raspi_log
 import mapping
 
@@ -18,26 +17,30 @@ INIT_STATE = "INIT_STATE"
 
 state = IDLE_STATE
 
+
 def callback_for_qr(client, userdata, msg):
-    mapping_mode.callback_for_qr(msg) 
-    
+    mapping_mode.callback_for_qr(msg)
+
+
 def callback_for_corner(client, userdata, msg):
     mapping_mode.callback_for_corner(msg)
-    
+
+
 def callback_for_obstacle(client, userdata, msg):
     mapping_mode.callback_for_obstacle(msg)
-    
+
+
 def main():
     global mapping_mode
     global state
-    
+
     lines = db_state_r.readlines()
     if len(lines) > 0:
         state = str(lines[len(lines) - 1])
         raspi_log.log_process(state)
     else:
         state = IDLE_STATE  # idle
-        
+
     mapping_mode = mapping.Mapping(finishCallback)
 
     mqtt_adapter.connect("md")
@@ -53,11 +56,12 @@ def on_message(client, userdata, msg):
     message = msg.payload.decode('utf-8')
     process_state(message)
 
+
 def finishCallback():
     global state
     state = INIT_STATE
     topic = "stateStatus"
-    mqtt_adapter.publish(state,topic)
+    mqtt_adapter.publish(state, topic)
     raspi_log.log_process(state)
     process_state(state)
     # change state to idle
@@ -66,7 +70,7 @@ def finishCallback():
 
 def run_explore_mode():
     global state
-    #mapping_mode = mapping.Mapping()
+    # mapping_mode = mapping.Mapping()
     if state == IDLE_STATE:
         state = MAPPING_STATE
         raspi_log.log_process("Mapping Active")
@@ -83,18 +87,17 @@ def run_duty_mode():
 
 
 def run_idle_mode():
-    global state 
+    global state
     state = IDLE_STATE
     raspi_log.log_process("Idle mode active. Waiting for followings orders")
     save_last_state()
-    
+
+
 def run_init_mode():
-    global state 
+    global state
     state = INIT_STATE
     raspi_log.log_process("Init mode active. Waiting for followings duties")
     save_last_state()
-
-
 
 
 state_functions = {
@@ -117,7 +120,3 @@ def save_last_state():
 
 def get_last_state():
     return state
-
-
-
-

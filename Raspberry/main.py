@@ -1,5 +1,6 @@
 import heartbeat
 import lifecycle
+from CrossCuttingConcerns import mqtt_adapter
 from Helpers import ip_helper
 import multiprocessing
 from Sensors import obstacle_detection, readingQR  # ,readingQR
@@ -15,10 +16,11 @@ def main():
 
     process_setup_ip.start()  # setup ip for connecting access point
     process_setup_ip.join()
-    process_life_cycle.start()
+
     process_heartbit.start()
     # process_obstacle.start()
     process_qr.start()
+    process_life_cycle.start()
 
     # while (!allProcessesReady)
     # empty
@@ -34,3 +36,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

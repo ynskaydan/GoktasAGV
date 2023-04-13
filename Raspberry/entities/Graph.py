@@ -1,9 +1,7 @@
-from CrossCuttingConcerns import mqtt_adapter, raspi_log
+from CrossCuttingConcerns import raspi_log
 from entities.Node import Node
 from entities.obstacle import Obstacle
 from entities.qr import QR
-from graph_converter import convert_json
-
 
 
 class Graph:
@@ -16,12 +14,71 @@ class Graph:
         self.num_of_obstacle = 0
         self.num_of_qr = 0
 
-    def add_node(self, pos_x, pos_y, node_type, unvisited, node_id=None): 
+    def add_node(self, pos_x, pos_y, node_type, unvisited, node_id=None):
         self.num_of_nodes += 1
         new_node = Node(pos_x, pos_y, node_type, unvisited, node_id or str(self.num_of_nodes))
         self.nodes[new_node.get_id()] = new_node
         return new_node
-   
+
+    def get_edge_weight(self, from_id, to_id):
+        weight = self.nodes[from_id].adjacents[to_id]
+        return weight
+
+    def get_node(self, node_id):
+        if node_id in self.nodes.keys():
+            return Node(self.nodes.get(node_id))
+        else:
+            return 0
+
+    def get_last_node(self):
+        nodes_list = list(self.nodes.keys())
+        last_node = self.nodes[nodes_list[len(nodes_list)-1]]
+
+        # last_node = nodes[len(self.nodes) - 1]  # Listedeki en son node çağırmak
+        return last_node
+
+    def add_edge(self, from_node, to_node):
+        weight = 0
+        s_node_pos_x = from_node.get_pos_x()
+        s_node_pos_y = from_node.get_pos_y()
+        f_node_pos_x = to_node.get_pos_x()
+        f_node_pos_y = to_node.get_pos_y()
+
+        if f_node_pos_x - s_node_pos_x == 0:
+            weight = abs(f_node_pos_y - s_node_pos_y)
+        if f_node_pos_y - s_node_pos_y == 0:
+            weight = abs(f_node_pos_x - s_node_pos_x)
+
+        from_node.add_adjacent(to_node, weight)
+        to_node.add_adjacent(from_node, weight)
+        self.edges += 1
+
+    def add_new_intersection(self, corner_type, posx, posy, unvisited_directions, node_id=None):
+        new_node = self.add_node(posx, posy, corner_type, unvisited_directions, node_id)
+        if len(self.nodes) > 1:
+            past_node = self.get_last_node()
+            self.add_edge(past_node, new_node)
+
+    @staticmethod
+    def visit_unvisited_direction(node):
+        new_direction = node.del_unvisited_direction()
+        return new_direction
+
+    def already_visited_node(self, posx, posy):
+        for node_id in self.nodes.keys():
+            node = self.get_node(node_id)
+            if node.get_pos_x() == int(posx) and node.get_pos_y() == int(posy):
+                return node
+        return None
+
+    def check_node_already_exist(self, pos_x, pos_y):
+        node_exists = False
+        for node_id in self.nodes.keys():
+            node = self.get_node(node_id)
+            if node.get_pos_x() == pos_x and node.get_pos_y() == pos_y:
+                node_exists = True
+                break
+        return node_exists
 
     def add_qr(self, qr_id, posx, posy):
         self.num_of_qr += 1
@@ -43,32 +100,12 @@ class Graph:
         self.num_of_obstacle += 1
         return new_obstacle
 
-    def add_edge(self, from_node, to_node):
-        weight = 0
-        s_node_pos_x = from_node.get_pos_x()
-        s_node_pos_y = from_node.get_pos_y()
-        f_node_pos_x = to_node.get_pos_x()
-        f_node_pos_y = to_node.get_pos_y()
+    def get_last_qr(self):
+        key_list = list(self.qr_list.keys())
+        last_key = key_list[self.num_of_qr - 1]
+        last_qr = self.get_qr(last_key)
 
-        if f_node_pos_x - s_node_pos_x == 0:
-            weight = abs(f_node_pos_y - s_node_pos_y)
-        if f_node_pos_y - s_node_pos_y == 0:
-            weight = abs(f_node_pos_x - s_node_pos_x)
-
-        from_node.add_adjacent(to_node, weight)
-        to_node.add_adjacent(from_node, weight)
-        self.edges += 1
-
-    def get_edge_weight(self, from_id, to_id):
-        weight = self.nodes[from_id].adjacents[to_id]
-        return weight
-
-    def get_node(self, node_id):
-        if node_id in self.nodes.keys():
-            
-            return self.nodes.get(node_id)
-        else:
-            return 0
+        return last_qr
 
     def get_obstacle(self, obs_id):
         if obs_id in self.obstacles.keys():
@@ -82,46 +119,9 @@ class Graph:
         else:
             return 0
 
-    def get_last_node(self):
-        last_node = self.nodes.get(str(self.num_of_nodes))
-        # last_node = nodes[len(self.nodes) - 1]  # Listedeki en son node çağırmak
-        return last_node
-
-    def add_new_intersection(self, corner_type, posx, posy, unvisited_directions, node_id=None):
-        past_node = self.get_last_node()
-        new_node = self.add_node(posx, posy, corner_type, unvisited_directions, node_id)
-        self.add_edge(past_node, new_node)
-
-    def visit_unvisited_direction(self, node):
-        new_direction = node.del_unvisited_direction()
-        return new_direction
-
-    def already_visited_node(self, posx, posy):
-        for node_id in self.nodes.keys():
-            node = self.get_node(node_id)
-            if node.get_pos_x() == int(posx) and node.get_pos_y() == int(posy):
-                return node
-        return None
-
-    def check_node_already_exist(self,pos_x,pos_y):
-        node_exists = False
-        for node_id in self.nodes.keys():
-            node = self.get_node(node_id)
-            if node.get_pos_x() == pos_x and node.get_pos_y() == pos_y:
-                node_exists = True
-                break
-        return node_exists
-
-    def get_last_qr(self):
-        key_list = list(self.qr_list.keys())
-        last_key = key_list[self.num_of_qr - 1]
-        last_qr = self.get_qr(last_key)
-
-        return last_qr
-    
     def nodes_having_unvisited_direction(self):
         nodes_having_unvisited = []
-        for node_id in self.nodes.keys:
+        for node_id in self.nodes.keys():
             node = self.get_node(node_id)
             if node.get_unvisited_directions() > 0:
                 nodes_having_unvisited.append(node_id)

@@ -7,12 +7,14 @@ from entities.Graph import Graph
 from graph_converter import read_database
 import arduino_manager
 
+
 db_graph_a = open("./Database/db_graph.txt", "a")
 db_graph_r = open("./Database/db_graph.txt", "r")
 
 new_direction = ""
 isPathFollowing = False
 pub_topic = "mapping"
+sub_qr_topic = "qr"
 
 
 class Mapping:
@@ -21,10 +23,10 @@ class Mapping:
         raspi_log.log_process(str(f"Mapping started! parent id: {os.getppid()},  self id: {os.getpid()}"))
         self.graph_map = Graph()
         self.PathHelper = path_helper.PathHelper()
-        result = read_database(db_graph_r, self.graph_map)
-        if not result:
+        check_database_update_graph = read_database(db_graph_r, self.graph_map)
+        if not check_database_update_graph:
             self.graph_map.add_new_intersection("Start", 0, 0, {}, "S")
-        if result:
+        if check_database_update_graph:
             raspi_log.log_process(str("Past data write on graph object"))
 
     def callback_for_obstacle(self, msg):
@@ -57,18 +59,19 @@ class Mapping:
         unvisited_directions = corner[3]
 
         if self.PathHelper.get_is_path_following():
+            current_node = self.graph_map.already_visited_node(posx, posy)
             # find position of current node from qrs
             if posx == self.PathHelper.get_target_node().get_pos_x() and posy == self.PathHelper.get_target_node().get_pos_y():
                 # path following finished
                 self.PathHelper.set_is_path_following_flag(False)
                 # after following path, the vehichle is on nodeWithUnvisited
-                current_node = self.graph_map.already_visited_node(posx, posy)
+
                 unvisited_direction = self.graph_map.visit_unvisited_direction(current_node) #Visit unvisited means turns unvisited direction to visited
                 arduino_manager.send_arduino_to_decision(corner_type,unvisited_direction) # Turn to unvisited direction
                 #turnToUnvisitedDirectionOfTheNodeWithUnvisited()
                 arduino_manager.stop_autonomous_motion_of_vehicle()
             elif corner_type == "T" or corner_type == "LEFT_T" or corner_type == "RIGHT_T":
-                direction = self.PathHelper.required_direction()
+                direction = self.PathHelper.required_direction(current_node,self.PathHelper.get_next_node())
                 arduino_manager.send_arduino_to_decision(corner_type,direction)
             return
 
@@ -76,7 +79,6 @@ class Mapping:
 
         if check_node_exist:
             already_visited_node = self.graph_map.already_visited_node(posx, posy)
-
             arduino_manager.stop_autonomous_motion_of_vehicle()
             nodes_with_unvisited = self.graph_map.nodes_having_unvisited_direction()
             if nodes_with_unvisited.count == 0:
@@ -84,16 +86,12 @@ class Mapping:
                 self.finish_callback()
                 return
             node_with_unvisited = self.graph_map.get_node(nodes_with_unvisited[0])
-            path = self.findPath(already_visited_node, node_with_unvisited)
-            self.startFollowPath(path)
+            path = self.PathHelper.find_path(already_visited_node, node_with_unvisited)
+            self.PathHelper.start_follow_path(path)
         else:
             self.graph_map.add_new_intersection(corner_type, posx, posy, unvisited_directions)
 
-        self.graph_map.send_graph_status(pub_topic)
-
-    def setPathFollowingFlag(self, bool):
-        global isPathFollowing
-        isPathFollowing = bool
+        self.send_graph_status(pub_topic)
 
     @staticmethod
     def get_corner_data(corner_type, qr):
@@ -147,7 +145,7 @@ class Mapping:
         global new_direction
         return new_direction
 
-    def send_graph_status(self, pub_topic):
-        json_graph = convert_json(self)
+    def send_graph_status(self,graph):
+        json_graph = convert_json(graph)
         db_graph_a.write(json_graph + "\n")
         mqtt_adapter.publish(json_graph, pub_topic)
