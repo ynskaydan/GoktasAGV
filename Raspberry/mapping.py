@@ -1,22 +1,35 @@
 import os
+<<<<<<< HEAD
+from Raspberry.graph_converter import convert_json
+
+=======
 from graph_converter import convert_json
+>>>>>>> main
 import imu_manager
 from CrossCuttingConcerns import mqtt_adapter, raspi_log
 from Helpers import path_helper
 from entities.Graph import Graph
 from graph_converter import read_database
 import arduino_manager
+<<<<<<< HEAD
+=======
 
+>>>>>>> main
 
 db_graph_a = open("./Database/db_graph.txt", "a")
 db_graph_r = open("./Database/db_graph.txt", "r")
 
 new_direction = ""
+<<<<<<< HEAD
+isPathFollowing = False 
+pub_topic = "mapping"
+=======
 isPathFollowing = False
 pub_topic = "mapping"
 sub_qr_topic = "qr"
 
 
+>>>>>>> main
 class Mapping:
     def __init__(self, finish_callback):
         self.finish_callback = finish_callback
@@ -30,8 +43,14 @@ class Mapping:
             raspi_log.log_process(message)
         if check_database_update_graph:
             raspi_log.log_process(str("Past data write on graph object"))
+<<<<<<< HEAD
+           
+    def callback_for_obstacle(self, msg):
+        message = msg.payload.decode('utf-8')
+=======
 
     def callback_for_obstacle(self, msg):
+>>>>>>> main
         last_node = self.graph_map.get_last_node()
         result_add_obstacle = self.graph_map.add_obstacle(last_node.get_pos_x(), 80)
         if result_add_obstacle == 0:
@@ -49,7 +68,11 @@ class Mapping:
             self.send_graph_status(pub_topic)
 
     def callback_for_corner(self, msg):
+<<<<<<< HEAD
+        global new_direction, isPathFollowing
+=======
         global new_direction
+>>>>>>> main
         message = msg.payload.decode('utf-8')
         corner_type = message
         last_qr = self.graph_map.get_last_qr()
@@ -58,6 +81,51 @@ class Mapping:
         posy = corner[1]
         new_direction = corner[2]
         unvisited_directions = corner[3]
+<<<<<<< HEAD
+        
+       
+        if isPathFollowing:
+            # find position of current node from qrs
+            if (positionOfCurrentNode equals positionOfTargetNode):
+                # path following finished
+                self.setPathFollowingFlag(False)
+                # after following path, the vehichle is on nodeWithUnvisited
+                turnToUnvisitedDirectionOfTheNodeWithUnvisited()
+                arduino_manager.stop_autonomous_motion_of_vehicle()
+            elif msg == "T":
+                direction = requiredDirectionTo(currentNode, nextNode)
+                turnVehicle(direction) # direct arduino
+            return
+        
+
+        check_node_exist = self.graph_map.check_node_already_exist(posx,posy)
+        
+        
+        if check_node_exist:
+            already_visited_node = self.graph_map.already_visited_node(posx,posy)
+            
+            arduino_manager.stop_autonomous_motion_of_vehicle()
+            nodesWithUnvisited = self.graph_map.nodes_having_unvisited_direction()
+            if nodesWithUnvisited.count == 0:
+                # finished mapping
+                self.finish_callback()
+                return
+            node_with_unvisited = self.graph_map.get_node(nodesWithUnvisited[0])
+            path = findPath(already_visited_node, node_with_unvisited)
+            startFollowPath(path)
+        else:
+            self.graph_map.add_new_intersection(corner_type, posx, posy, unvisited_directions)
+            
+        
+            
+        self.graph_map.send_graph_status(pub_topic)
+
+    def setPathFollowingFlag(self,bool):
+        global isPathFollowing
+        isPathFollowing = bool
+        
+        
+=======
 
         if self.PathHelper.get_is_path_following():
             current_node = self.graph_map.already_visited_node(posx, posy)
@@ -94,6 +162,7 @@ class Mapping:
 
         self.send_graph_status(pub_topic)
 
+>>>>>>> main
     @staticmethod
     def get_corner_data(corner_type, qr):
         direction = imu_manager.get_direction()
@@ -145,9 +214,17 @@ class Mapping:
     def get_new_direction():
         global new_direction
         return new_direction
+<<<<<<< HEAD
+    
+    def send_graph_status(self, pub_topic):
+        json_graph = convert_json(self)
+        db_graph_a.write(json_graph + "\n")
+        mqtt_adapter.publish(json_graph, pub_topic)
+=======
 
     @staticmethod
     def send_graph_status(graph):
         json_graph = convert_json(graph)
         db_graph_a.write(json_graph + "\n")
         mqtt_adapter.publish(json_graph, pub_topic)
+>>>>>>> main

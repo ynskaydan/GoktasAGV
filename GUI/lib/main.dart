@@ -161,8 +161,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               ),
                               DataComponent(
                                 subTitle: "Araç Durumu",
-                                contentData: DataComponentContent(
-                                    text: "Araç İstirahatte"),
+                                contentData: VehicleStatus(),
                                 widthSize:
                                     MediaQuery.of(context).size.width / 8,
                                 heightSize:

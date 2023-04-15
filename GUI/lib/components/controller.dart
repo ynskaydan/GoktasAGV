@@ -43,7 +43,7 @@ class _ControllerState extends State<Controller> {
   }
 
   Color _buttonColor = Colors.red;
-  bool _isButtonOn = true;
+  bool _isButtonOn = false;
 
   int a = 0;
   int b = 0;
@@ -122,14 +122,14 @@ class _ControllerState extends State<Controller> {
   void _manuelControl() {
     setState(() {
       client.publishString(modeTopic, 'manuel', MqttQos.atLeastOnce);
-      print('MANUEL CONTROL ACTIVATED!');
+      print('MANUEL CONTROL ACTIVATED');
     });
   }
 
   void _autonomousControl() {
     setState(() {
       client.publishString(modeTopic, 'autonomous', MqttQos.atLeastOnce);
-      print('AUTONOMOUS CONTROL ACTIVATED!');
+      print('AUTONOMOUS CONTROL ACTIVATED');
     });
   }
 
@@ -376,12 +376,16 @@ class _ControllerState extends State<Controller> {
             ),
             const SizedBox(width: 15),
             linearActuator(
-                direction: 4, icon: Icon(Icons.arrow_circle_up_sharp)),
+                direction: 4,
+                icon: const Icon(Icons.arrow_circle_up_sharp, size: 40)),
             const SizedBox(width: 15),
             linearActuator(
-                direction: 5, icon: Icon(Icons.arrow_circle_down_sharp)),
+                direction: 5,
+                icon: const Icon(Icons.arrow_circle_down_sharp, size: 40)),
             const SizedBox(width: 15),
-            linearActuator(direction: 6, icon: Icon(Icons.stop_circle_sharp)),
+            linearActuator(
+                direction: 6,
+                icon: const Icon(Icons.stop_circle_sharp, size: 40)),
           ],
         ),
       ],

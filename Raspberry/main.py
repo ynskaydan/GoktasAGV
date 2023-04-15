@@ -22,12 +22,21 @@ def main():
     process_qr.start()
     process_life_cycle.start()
 
+<<<<<<< HEAD
+    while (!allProcessesReady)
+        # empty
+    
+    # above loop keep the process busy until all processes ready
+    
+    sendReadyMessage()
+=======
     # while (!allProcessesReady)
     # empty
 
     # above loop keep the process busy until all processes ready
 
     # sendReadyMessage()
+>>>>>>> main
 
     process_qr.join()
     process_heartbit.join()

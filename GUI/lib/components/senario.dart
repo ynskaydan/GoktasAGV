@@ -8,7 +8,7 @@ import 'package:universal_mqtt_client/universal_mqtt_client.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:goktasgui/components/constants.dart';
 
-var mappingState = true;
+var mappingState = false;
 
 class EntrySenario extends StatefulWidget {
   const EntrySenario({super.key});
@@ -31,16 +31,13 @@ class _EntrySenarioState extends State<EntrySenario> {
   String pubTopic = "scenario";
   String subTopic = "subScenario";
   void connectionSenario() async {
-    //print("connection");
-    //client.status.listen((status) {
-    //  print('Connection Status: $status');
-    //});
     await client.connect();
-
-    final subscription =
-        client.handleString(subTopic, MqttQos.atLeastOnce).listen((message) {
-      print("map durumu -> " + mappingState.toString());
-      print(message);
+    final subscription = client
+        .handleString('mappingState', MqttQos.atLeastOnce)
+        .listen((message) {
+      if (message.toString() == "mappingFinished") mappingState = false;
+      if (message.toString() == "startTheMapping") mappingState = true;
+      print(message.toString());
       // obstacles = graph.obstacles;
     });
   }
@@ -114,19 +111,17 @@ class _MainButtonsState extends State<MainButtons> {
     super.initState();
   }
 
-  void _startTheMapping() {
+  void _startTheCalibration() {
     setState(() {
-      mappingState == true;
-      client.publishString(
-          mappingStateTopic, 'start the mapping', MqttQos.atLeastOnce);
+      client.publishString("mode", 'startTheCalibration', MqttQos.atLeastOnce);
     });
   }
 
-  void _stopTheMapping() {
+  void _startTheMapping() {
     setState(() {
-      mappingState == false;
+      print(mappingState);
       client.publishString(
-          mappingStateTopic, 'stop the mapping', MqttQos.atLeastOnce);
+          "mappingState", 'startTheMapping', MqttQos.atLeastOnce);
     });
   }
 
@@ -149,17 +144,9 @@ class _MainButtonsState extends State<MainButtons> {
               children: [
                 ElevatedButton(
                     onPressed: () {
-                      _startTheMapping();
+                      _startTheCalibration();
                     },
                     child: Text("Kalibrasyon")),
-                SizedBox(
-                  width: 20,
-                ),
-                /* ElevatedButton(
-                    onPressed: () {
-                      _startTheMapping();
-                    },
-                    child: Text("Buton")), */
                 SizedBox(
                   width: 20,
                 ),
@@ -167,7 +154,7 @@ class _MainButtonsState extends State<MainButtons> {
                     onPressed: () {
                       _startTheMapping();
                     },
-                    child: Text("Başla!")),
+                    child: Text("Haritalandırmaya Başla")),
                 SizedBox(
                   width: 20,
                 ),
@@ -182,5 +169,46 @@ class _MainButtonsState extends State<MainButtons> {
         ),
       ),
     );
+  }
+}
+
+class VehicleStatus extends StatefulWidget {
+  const VehicleStatus({super.key});
+
+  @override
+  State<VehicleStatus> createState() => _VehicleStatusState();
+}
+
+class _VehicleStatusState extends State<VehicleStatus> {
+  final client = UniversalMqttClient(
+    broker: Uri.parse('ws://localhost:8080'),
+    autoReconnect: true,
+  );
+  String vehicleStaus = "";
+  @override
+  void initState() {
+    _vehicleStauts();
+    super.initState();
+  }
+
+  void _vehicleStauts() async {
+    await client.connect();
+    final subscription =
+        client.handleString('mode', MqttQos.atLeastOnce).listen((message) {
+      switch (message.toString()) {
+        case "startTheMapping":
+          vehicleStaus = "Haritalandırma yapılıyor...";
+          break;
+        case "calibration":
+          vehicleStaus = "Kalibrasyon yapılıyor...";
+          break;
+        default:
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DataComponentContent(text: vehicleStaus);
   }
 }
