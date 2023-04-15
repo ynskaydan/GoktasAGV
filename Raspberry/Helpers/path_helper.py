@@ -29,7 +29,6 @@ class PathHelper:
     def find_path(self, graph, start_node, end_node):
         self.start_node = start_node
         self.target_node = end_node
-
         # path finding algorithm: djikstra or some graph traversal
         return [start_node, intermediate_node1, intermediate_node2, end_node]
 

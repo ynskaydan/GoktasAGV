@@ -26,11 +26,12 @@ class Mapping:
         check_database_update_graph = read_database(db_graph_r, self.graph_map)
         if not check_database_update_graph:
             self.graph_map.add_new_intersection("Start", 0, 0, {}, "S")
+            message = str(f"There was not a saved map to be found. Initial steps were executed to generate the map.")
+            raspi_log.log_process(message)
         if check_database_update_graph:
             raspi_log.log_process(str("Past data write on graph object"))
 
     def callback_for_obstacle(self, msg):
-        message = msg.payload.decode('utf-8')
         last_node = self.graph_map.get_last_node()
         result_add_obstacle = self.graph_map.add_obstacle(last_node.get_pos_x(), 80)
         if result_add_obstacle == 0:
@@ -48,7 +49,7 @@ class Mapping:
             self.send_graph_status(pub_topic)
 
     def callback_for_corner(self, msg):
-        global new_direction, isPathFollowing
+        global new_direction
         message = msg.payload.decode('utf-8')
         corner_type = message
         last_qr = self.graph_map.get_last_qr()
@@ -145,7 +146,8 @@ class Mapping:
         global new_direction
         return new_direction
 
-    def send_graph_status(self,graph):
+    @staticmethod
+    def send_graph_status(graph):
         json_graph = convert_json(graph)
         db_graph_a.write(json_graph + "\n")
         mqtt_adapter.publish(json_graph, pub_topic)

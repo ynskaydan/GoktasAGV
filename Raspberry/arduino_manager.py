@@ -19,7 +19,7 @@ def callback_for_intersection(client, userdata, msg):
     message = msg.payload.decode('utf-8')  # takes LEFT_T,LEFT_L,RIGHT_L etc
     new_direction = ""
     if lifecycle.get_last_state() == "explore":
-        new_direction = mapping.get_new_direction()
+        new_direction = mapping.Mapping.get_new_direction()
     send_arduino_to_decision(message, new_direction)
 
 
@@ -54,5 +54,5 @@ def stop_autonomous_motion_of_vehicle():
 
 def start_autonomous_motion_of_vehicle():
     message = "START-AUTO-MOTION"
-    mqtt_adapter.publish(message,pub_auto_motion_control)
+    mqtt_adapter.publish(message, pub_auto_motion_control)
     raspi_log.log_process(message)

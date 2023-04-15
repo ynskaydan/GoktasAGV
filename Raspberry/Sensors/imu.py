@@ -1,7 +1,9 @@
-import smbus2
-import math
-import time
 import datetime
+import math
+import os
+import time
+
+import smbus2
 
 from CrossCuttingConcerns import raspi_log
 
@@ -13,15 +15,19 @@ y_offset = 0
 z_offset = 0
 x_scale = 1
 y_scale = 1
+raspi_log.log_process(str(f"IMU started! parent id:, {os.getppid()},  self id:, {os.getpid()}"))
+
 
 def read_byte(address, adr):
     return bus.read_byte_data(address, adr)
 
+
 def read_word(address, adr):
     high = bus.read_byte_data(address, adr)
-    low = bus.read_byte_data(address, adr+1)
+    low = bus.read_byte_data(address, adr + 1)
     val = (high << 8) + low
     return val
+
 
 def read_word_2c(address, adr):
     val = read_word(address, adr)
@@ -30,8 +36,10 @@ def read_word_2c(address, adr):
     else:
         return val
 
+
 def write_byte(address, adr, value):
     bus.write_byte_data(address, adr, value)
+
 
 def calibrate_compass():
     global x_offset, y_offset, z_offset, x_scale, y_scale
@@ -41,24 +49,23 @@ def calibrate_compass():
     x_scale = 1.16
     y_scale = 1.08
 
+
 def setup_imu():
     global bus
     # MPU6050 için güç yönetimini ayarlama
 
-    bus.write_byte_data(0x68,0x6B,0x00)
-    bus.write_byte_data(0x68,0x1A,0x06)
-    bus.write_byte_data(0x68,0x1B,0x18)
-    bus.write_byte_data(0x68,0x1C,0x10)
-    bus.write_byte_data(0x68,0x37,0x02)
-    
-    
-    bus.write_byte_data(0x0C,0x0A,0x16)
-    bus.write_byte_data(0x68,0x0B,0x12)
+    bus.write_byte_data(0x68, 0x6B, 0x00)
+    bus.write_byte_data(0x68, 0x1A, 0x06)
+    bus.write_byte_data(0x68, 0x1B, 0x18)
+    bus.write_byte_data(0x68, 0x1C, 0x10)
+    bus.write_byte_data(0x68, 0x37, 0x02)
+
+    bus.write_byte_data(0x0C, 0x0A, 0x16)
+    bus.write_byte_data(0x68, 0x0B, 0x12)
     # AK8975C için ölçek faktörünü ayarlama
-    bus.write_byte_data(0x68,0x24,0x06)
-    bus.write_byte_data(0x68,0x25,0x08)    
-    
-    
+    bus.write_byte_data(0x68, 0x24, 0x06)
+    bus.write_byte_data(0x68, 0x25, 0x08)
+
 
 def read_imu():
     # Pusula verileri okuma
@@ -85,6 +92,7 @@ def read_imu():
     # Sonuçları döndürme
     return (math.degrees(bearing), x_acc_scaled, y_acc_scaled, z_acc_scaled)
 
+
 # Pusula kalibrasyonunu yapma
 calibrate_compass()
 
@@ -93,7 +101,6 @@ setup_imu()
 
 time_old = datetime.datetime.now().second
 while True:
-    
     # Verileri okuma
     bearing, x_acc, y_acc, z_acc = read_imu()
     time_now = datetime.datetime.now().second
@@ -102,7 +109,7 @@ while True:
     vx = x_acc * diff_time
     vy = y_acc * diff_time
     vz = z_acc - diff_time
-    speed = math.sqrt(vx*vx + vy*vy + vz*vz)
+    speed = math.sqrt(vx * vx + vy * vy + vz * vz)
     # Sonuçları yazdırma
     raspi_log.log_process(str(f"Pusula Yönü: {bearing}"))
     raspi_log.log_process(str(f"X İvme:  x_acc"))
