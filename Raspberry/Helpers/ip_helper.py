@@ -9,10 +9,9 @@ def setup_ip():
     default_gateway = "192.168.1.1"  # Değiştirilecek varsayılan ağ geçidi
     dns_server = "8.8.8.8"  # Değiştirilecek DNS sunucusu
     raspi_log.log_process(str(f"IP address of eth0 is changing to {ip_address}"))
-    try:
-        os.system(f"sudo ip addr add {ip_address}/{subnet_mask} dev eth0")
-        os.system(f"sudo ip route add default via {default_gateway}")
-        os.system(f"sudo echo 'nameserver {dns_server}' > /etc/resolv.conf")
-    except:
-        raspi_log.log_process(BaseException)
+    os.system(f"sudo ip addr add {ip_address}/{subnet_mask} dev eth0")
+    os.system(f"sudo ip route add default via {default_gateway}")
+    os.system(f"sudo echo 'nameserver {dns_server}' > /etc/resolv.conf")
+
+
 

@@ -1,6 +1,6 @@
 class Node:
-    def __init__(self, id, posx, posy, type, unvisiteds):
-        self.id = id
+    def __init__(self, posx, posy, type, unvisiteds, node_id=None):
+        self.id = node_id
         self.pos = [posx, posy]
         self.adjacents = {}
         self.unvisited_directions = []

@@ -32,10 +32,12 @@ class _EntrySenarioState extends State<EntrySenario> {
   String subTopic = "subScenario";
   void connectionSenario() async {
     await client.connect();
-    final subscription =
-        client.handleString('mapping', MqttQos.atLeastOnce).listen((message) {
+    final subscription = client
+        .handleString('mappingState', MqttQos.atLeastOnce)
+        .listen((message) {
       if (message.toString() == "mappingFinished") mappingState = false;
       if (message.toString() == "startTheMapping") mappingState = true;
+      print(message.toString());
       // obstacles = graph.obstacles;
     });
   }
@@ -118,7 +120,8 @@ class _MainButtonsState extends State<MainButtons> {
   void _startTheMapping() {
     setState(() {
       print(mappingState);
-      client.publishString("mapping", 'startTheMapping', MqttQos.atLeastOnce);
+      client.publishString(
+          "mappingState", 'startTheMapping', MqttQos.atLeastOnce);
     });
   }
 
@@ -166,5 +169,46 @@ class _MainButtonsState extends State<MainButtons> {
         ),
       ),
     );
+  }
+}
+
+class VehicleStatus extends StatefulWidget {
+  const VehicleStatus({super.key});
+
+  @override
+  State<VehicleStatus> createState() => _VehicleStatusState();
+}
+
+class _VehicleStatusState extends State<VehicleStatus> {
+  final client = UniversalMqttClient(
+    broker: Uri.parse('ws://localhost:8080'),
+    autoReconnect: true,
+  );
+  String vehicleStaus = "";
+  @override
+  void initState() {
+    _vehicleStauts();
+    super.initState();
+  }
+
+  void _vehicleStauts() async {
+    await client.connect();
+    final subscription =
+        client.handleString('mode', MqttQos.atLeastOnce).listen((message) {
+      switch (message.toString()) {
+        case "startTheMapping":
+          vehicleStaus = "Haritalandırma yapılıyor...";
+          break;
+        case "calibration":
+          vehicleStaus = "Kalibrasyon yapılıyor...";
+          break;
+        default:
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DataComponentContent(text: vehicleStaus);
   }
 }

@@ -84,6 +84,7 @@ class _DataComponentState extends State<DataComponent> {
 Widget DataComponentContent({required String text}) {
   return Text(
     text,
+    textAlign: TextAlign.center,
     style: const TextStyle(fontSize: 30, color: Colors.white),
   );
 }
