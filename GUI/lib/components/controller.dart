@@ -3,11 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_neumorphic/flutter_neumorphic.dart';
-
 import 'package:goktasgui/components/controller.dart';
 import 'package:universal_mqtt_client/universal_mqtt_client.dart';
 import 'package:mqtt_client/mqtt_client.dart';
-import 'package:goktasgui/components/constants.dart';
 import 'package:goktasgui/components/constants.dart';
 
 class Controller extends StatefulWidget {
@@ -23,28 +21,23 @@ class _ControllerState extends State<Controller> {
     broker: Uri.parse('ws://localhost:8080'),
     autoReconnect: true,
   );
+
+  @override
   void initState() {
     connection();
-    //setupUpdatesListener();
     super.initState();
   }
 
   void connection() async {
-    print("connection");
     client.status.listen((status) {
+      // ignore: avoid_print
       print('Connection Status: $status');
     });
-
     await client.connect();
-
-    //await subscription.cancel();
-
-    //client.disconnect();
   }
 
   Color _buttonColor = Colors.red;
   bool _isButtonOn = false;
-
   int a = 0;
   int b = 0;
   String pubTopic = "move";
@@ -56,7 +49,6 @@ class _ControllerState extends State<Controller> {
       setState(() {
         y++;
         client.publishString(pubTopic, 'w', MqttQos.atLeastOnce);
-        print('pos(x,y): (${x.toString()},${y.toString()}) | MOVE FORWARD');
       });
     }
   }
@@ -66,7 +58,6 @@ class _ControllerState extends State<Controller> {
       setState(() {
         y--;
         client.publishString(pubTopic, 's', MqttQos.atLeastOnce);
-        print('pos(x,y): (${x.toString()},${y.toString()}) | MOVE BACKWARD');
       });
     }
   }
@@ -76,7 +67,6 @@ class _ControllerState extends State<Controller> {
       setState(() {
         x++;
         client.publishString(pubTopic, 'd', MqttQos.atLeastOnce);
-        print('pos(x,y): (${x.toString()},${y.toString()}) | MOVE RIGHT');
       });
     }
   }
@@ -85,7 +75,6 @@ class _ControllerState extends State<Controller> {
     if (_isButtonOn) {
       setState(() {
         x--;
-        print('pos(x,y): (${x.toString()},${y.toString()}) | MOVE LEFT');
       });
       client.publishString(pubTopic, 'a', MqttQos.atLeastOnce);
     }
@@ -94,42 +83,36 @@ class _ControllerState extends State<Controller> {
   void _stopEngine() {
     setState(() {
       client.publishString(pubTopic, 'e', MqttQos.atLeastOnce);
-      print('pos(x,y): (${x.toString()},${y.toString()}) | ENGINE STOPPED');
     });
   }
 
   void _forwardLinearActuator() {
     setState(() {
       client.publishString(pubTopic, 't', MqttQos.atLeastOnce);
-      print('LINEAR ACTUATOR FORWARD');
     });
   }
 
   void _backwardLinearActuator() {
     setState(() {
       client.publishString(pubTopic, 'u', MqttQos.atLeastOnce);
-      print('LINEAR ACTUATOR BACKWARD');
     });
   }
 
   void _stopLinearActuator() {
     setState(() {
       client.publishString(pubTopic, 'y', MqttQos.atLeastOnce);
-      print('LINEAR ACTUATOR STOPPED');
     });
   }
 
   void _manuelControl() {
     setState(() {
-      client.publishString(modeTopic, 'manuel', MqttQos.atLeastOnce);
-      print('MANUEL CONTROL ACTIVATED');
+      client.publishString(modeTopic, 'manual', MqttQos.atLeastOnce);
     });
   }
 
   void _autonomousControl() {
     setState(() {
       client.publishString(modeTopic, 'autonomous', MqttQos.atLeastOnce);
-      print('AUTONOMOUS CONTROL ACTIVATED');
     });
   }
 
@@ -177,7 +160,7 @@ class _ControllerState extends State<Controller> {
             ? Colors.grey
             : _isButtonOn
                 ? Constant.directionGrey
-                : Colors.black12, // arka plan rengi değiştirildi
+                : Colors.black12,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
@@ -236,7 +219,7 @@ class _ControllerState extends State<Controller> {
             ? Colors.grey
             : _isButtonOn
                 ? Constant.directionGrey
-                : Colors.black12, // arka plan rengi değiştirildi
+                : Colors.black12,
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
@@ -283,7 +266,7 @@ class _ControllerState extends State<Controller> {
   }
 
   Widget controllerButton() {
-    return Container(
+    return SizedBox(
       width: MediaQuery.of(context).size.width / 24,
       child: ElevatedButton(
         onPressed: () {
@@ -314,11 +297,11 @@ class _ControllerState extends State<Controller> {
                 color: Colors.white,
               ),
             ),
-            SizedBox(height: 5),
+            const SizedBox(height: 5),
             Text(
               _isButtonOn ? 'ON' : 'OFF',
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
