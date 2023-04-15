@@ -43,11 +43,12 @@ class _ControllerState extends State<Controller> {
   }
 
   Color _buttonColor = Colors.red;
-  bool _isButtonOn = false;
+  bool _isButtonOn = true;
 
   int a = 0;
   int b = 0;
   String pubTopic = "move";
+  String modeTopic = "mode";
   String text = "No Sended Message";
 
   void _moveForward() {
@@ -115,6 +116,20 @@ class _ControllerState extends State<Controller> {
     setState(() {
       client.publishString(pubTopic, 'y', MqttQos.atLeastOnce);
       print('LINEAR ACTUATOR STOPPED');
+    });
+  }
+
+  void _manuelControl() {
+    setState(() {
+      client.publishString(modeTopic, 'manuel', MqttQos.atLeastOnce);
+      print('MANUEL CONTROL ACTIVATED!');
+    });
+  }
+
+  void _autonomousControl() {
+    setState(() {
+      client.publishString(modeTopic, 'autonomous', MqttQos.atLeastOnce);
+      print('AUTONOMOUS CONTROL ACTIVATED!');
     });
   }
 
@@ -275,7 +290,13 @@ class _ControllerState extends State<Controller> {
           setState(() {
             _isButtonOn = !_isButtonOn;
             _buttonColor = _isButtonOn ? Colors.green : Colors.red;
-            // print("Manuel Kontrol Durumu: $_isButtonOn");
+
+            if (_isButtonOn) {
+              _manuelControl();
+            } else {
+              _autonomousControl();
+            }
+            print("Manuel Kontrol Durumu: $_isButtonOn");
           });
         },
         style: ElevatedButton.styleFrom(

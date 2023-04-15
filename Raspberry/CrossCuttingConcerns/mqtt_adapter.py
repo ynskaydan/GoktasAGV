@@ -12,7 +12,7 @@ db_logs = open(file_path, "a")
 def connect(cid):
     global client
 
-    broker = "192.168.1.101"
+    broker = "localhost"
     port = 1883
     client_id = f'mqtt-raspberry-{cid}'
     username = 'goktas'
@@ -24,7 +24,7 @@ def connect(cid):
     def on_connect(client, userdata, flags, rc):
         now = datetime.datetime.now()
         if rc == 0:
-            result = str(f"{now.hour}:{now.minute}:{now.second} Connected to MQTT Broker by  {client.client_id}")
+            result = str(f"{now.hour}:{now.minute}:{now.second} Connected to MQTT Broker by  {client_id}")
             log(result)
             return True
         else:
@@ -43,11 +43,11 @@ def publish(message, topic):
     status = result[0]
     if status == 0:
         resultx = str(
-            f"{now.hour}:{now.minute}:{now.second} Message '{message}' sent to topic '{topic}' cid: {client.client_id}")
+            f"{now.hour}:{now.minute}:{now.second} Message '{message}' sent to topic '{topic}'")
 
     else:
         resultx = str(
-            f"{now.hour}:{now.minute}:{now.second} Failed to send message to topic {topic} cid: {client.client_id}")
+            f"{now.hour}:{now.minute}:{now.second} Failed to send message to topic {topic}")
 
     print(resultx)
     db_logs.write(resultx)

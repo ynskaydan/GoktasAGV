@@ -2,7 +2,7 @@ import cv2
 import datetime
 import os
 
-from CrossCuttingConcerns import mqtt_adapter, raspi_log
+from CrossCuttingConcerns import raspi_log, mqtt_adapter
 
 topic = "qr"
 time_old = datetime.datetime.now()
@@ -10,9 +10,9 @@ time_old = datetime.datetime.now()
 
 def main():
     raspi_log.log_process(str(f"Qr started! parent id:, {os.getppid()},  self id:, {os.getpid()}"))
-
-    olddata = ""
     mqtt_adapter.connect("qr")
+    old_data = ""
+
     # set up camera objects
     cap = cv2.VideoCapture(0)
     # QR code detection object
@@ -32,9 +32,8 @@ def main():
             # cv2.putText(img, data, (int(bbox[0][0][0]), int(bbox[0][0][1]) - 10), cv2.FONT_HERSHEY_SIMPLEX,
             #          0.5, (0, 255, 0), 2)
             if data:
-                raspi_log.log_process(str(f"data found:  {data}"))
-                send_qr(data, olddata)
-                olddata = data
+                send_qr(data, old_data)
+                old_data = data
 
         # display the image preview
         # cv2.imshow("code detector", img)
@@ -50,11 +49,12 @@ def send_qr(message, old_message):
     global topic, time_old
     global time_old
     time_now = datetime.datetime.now().second
-    resultx = message
+    result = message
     if old_message != message:
-        mqtt_adapter.publish(resultx,topic)
+        mqtt_adapter.publish(result, topic)
+        raspi_log.log_process(result)
         time_old = time_now
     else:
         if (time_now - time_old) % 60 >= 10:
-            mqtt_adapter.publish(resultx,topic)
+            mqtt_adapter.publish(result, topic)
             time_old = time_now

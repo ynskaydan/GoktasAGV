@@ -7,7 +7,7 @@ speed = ""
 
 def main():
     raspi_log.log_process(str(f"Imu started! parent id: {os.getppid()},  self id: {os.getpid()}"))
-    mqtt_adapter.connect()
+    mqtt_adapter.connect("imu")
     mqtt_adapter.subscribe(sub_topic, callback)
 
 

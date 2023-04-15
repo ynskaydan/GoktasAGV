@@ -19,6 +19,7 @@ class EmergencyStop extends StatefulWidget {
 }
 
 class _EmergencyStopState extends State<EmergencyStop> {
+  var emergencyTopic = "emergency";
   final client = UniversalMqttClient(
     broker: Uri.parse('ws://localhost:8080'),
     autoReconnect: true,
@@ -35,7 +36,7 @@ class _EmergencyStopState extends State<EmergencyStop> {
   void _stopEngine() {
     setState(() {
       client.publishString(
-          pubTopic,
+          emergencyTopic,
           'pos(x,y): (${x.toString()},${y.toString()}), engine stopped',
           MqttQos.atLeastOnce);
       print('pos(x,y): (${x.toString()},${y.toString()}) | ENGINE STOPPED');
