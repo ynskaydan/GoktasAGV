@@ -46,13 +46,16 @@ def send_arduino_to_decision(corner_type, new_direction):
     elif corner_type == "T" and (prev_direction, new_direction) in movement_dict:
         mqtt_adapter.publish(movement_dict[(corner_type, (prev_direction, new_direction))], sub_intersection_topic)
 
+
 def start_obstacle_flow(distance):
     mqtt_adapter.publish("START_OBSTACLE_FLOW", "event-control")
+
 
 def stop_autonomous_motion_of_vehicle():
     message = "STOP-AUTO-MOTION"
     mqtt_adapter.publish(message, pub_auto_motion_control)
     raspi_log.log_process(message)
+
 
 def start_autonomous_motion_of_vehicle():
     message = "START-AUTO-MOTION"

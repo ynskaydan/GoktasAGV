@@ -1,2 +1,0 @@
-{"nodes": [{"id": "S", "pos": {"x": 0, "y": 0}, "type": "Start", "adjacents": [], "unvisitedDirections": []}], "qr": [{"id": "Q1", "pos": {"x": 10, "y": 0}}], "obstacles": []}
-{"nodes": [{"id": "S", "pos": {"x": 0, "y": 0}, "type": "Start", "adjacents": [], "unvisitedDirections": []}, {"id": "1", "pos": {"x": 10, "y": 0}, "type": "LEFT_L\r\n", "adjacents": ["1"], "unvisitedDirections": []}], "qr": [{"id": "Q1", "pos": {"x": 10, "y": 0}}], "obstacles": []}

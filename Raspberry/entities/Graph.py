@@ -34,9 +34,9 @@ class Graph:
             return 0
 
     def get_last_node(self):
-        nodes_list = list(self.nodes.items())
-        last_node = nodes_list[len(self.nodes)-1]
-
+        nodes_list_keys = list(self.nodes.keys())
+        last_node_id = nodes_list_keys[len(nodes_list_keys) - 1]
+        last_node = self.get_node(last_node_id)
         # last_node = nodes[len(self.nodes) - 1]  # Listedeki en son node çağırmak
         return last_node
 
@@ -120,7 +120,7 @@ class Graph:
 
     def get_last_qr(self):
         key_list = list(self.qr_list.keys())
-        last_key = key_list[self.num_of_qr - 1]
+        last_key = key_list[len(key_list) - 1]
         last_qr = self.get_qr(last_key)
 
         return last_qr
