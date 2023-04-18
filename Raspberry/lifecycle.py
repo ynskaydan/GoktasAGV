@@ -2,6 +2,7 @@ import os
 
 import mapping
 from CrossCuttingConcerns import mqtt_adapter, raspi_log
+from Sensors import obstacle_detection
 
 db_state_a = open("./Database/db_state.txt", "a")
 db_state_r = open("./Database/db_state.txt", "r")
@@ -21,15 +22,24 @@ state = IDLE_STATE
 
 
 def callback_for_qr(client, userdata, msg):
-    mapping_mode.callback_for_qr(msg)
+    global mapping_mode
+    if state == MAPPING_STATE:
+        mapping_mode.callback_for_qr(msg)
 
 
 def callback_for_corner(client, userdata, msg):
-    mapping_mode.callback_for_corner(msg)
+    global mapping_mode
+    message = msg.payload.decode('utf-8')
+    if state == MAPPING_STATE:
+        mapping_mode.callback_for_corner(message)
 
 
 def callback_for_obstacle(client, userdata, msg):
-    mapping_mode.callback_for_obstacle(msg)
+    global mapping_mode
+    if state == MAPPING_STATE:
+        mapping_mode.callback_for_obstacle(msg)
+    if msg == "ENDED_OBSTACLE_FLOW":
+        obstacle_detection.callback_for_end_obstacle()
 
 
 def main():
@@ -74,12 +84,13 @@ def finish_callback():
 def run_explore_mode():
     global state
     global mapping_mode
+    mapping_mode = mapping.Mapping(finish_callback)
     # mapping_mode = mapping.Mapping()
     if state == IDLE_STATE:
         state = MAPPING_STATE
         raspi_log.log_process("Mapping state active!")
         save_last_state()
-        mapping_mode = mapping.Mapping(finish_callback)
+
 
 
 def run_duty_mode():

@@ -5,7 +5,7 @@ def convert_json(graph):
     nodes = []
     qr_list = []
     obstacles = []
-    for node_id in graph.nodes:
+    for node_id in graph.get_nodes():
         node = graph.get_node(node_id)
         list_adjacents = []
         list_unvisited_directions = []
@@ -56,7 +56,7 @@ def read_database(db, graph):
             node_type = node_data['type']
             adjacents = node_data['adjacents']
             unvisited_directions = node_data['unvisitedDirections']
-            node = graph.add_node(node_id, pos_x, pos_y, node_type, unvisited_directions)
+            node = graph.add_node(pos_x, pos_y, node_type, unvisited_directions, node_id)
             if len(adjacents) > 0:
                 for adjacent_id in adjacents:
                     adjacent = graph.get_node(adjacent_id)

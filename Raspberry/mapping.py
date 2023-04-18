@@ -25,7 +25,7 @@ class Mapping:
         self.PathHelper = path_helper.PathHelper()
         check_database_update_graph = read_database(db_graph_r, self.graph_map)
         if not check_database_update_graph:
-            self.graph_map.add_new_intersection("Start", 0, 0, {}, "S")
+            self.graph_map.add_new_intersection("Start", 0, 0,{},"S")
             message = str(f"There was not a saved map to be found. Initial steps were executed to generate the map.")
             raspi_log.log_process(message)
         if check_database_update_graph:
@@ -37,7 +37,7 @@ class Mapping:
         if result_add_obstacle == 0:
             raspi_log.log_process(str("Obstacle already in list"))
         else:
-            self.send_graph_status(pub_topic)
+            self.send_graph_status(self.graph_map)
 
     def callback_for_qr(self, msg):
         message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
@@ -46,12 +46,11 @@ class Mapping:
         if result_add_qr == 0:
             mqtt_adapter.publish("QR is already in list", sub_qr_topic)
         else:
-            self.send_graph_status(pub_topic)
+            self.send_graph_status(self.graph_map)
 
     def callback_for_corner(self, msg):
         global new_direction
-        message = msg.payload.decode('utf-8')
-        corner_type = message
+        corner_type = msg
         last_qr = self.graph_map.get_last_qr()
         corner = self.get_corner_data(corner_type, last_qr)
         posx = corner[0]
@@ -79,6 +78,7 @@ class Mapping:
         check_node_exist = self.graph_map.check_node_already_exist(posx, posy)
 
         if check_node_exist:
+            raspi_log.log_process("A faced with already visited intersection")
             already_visited_node = self.graph_map.already_visited_node(posx, posy)
             arduino_manager.stop_autonomous_motion_of_vehicle()
             nodes_with_unvisited = self.graph_map.nodes_having_unvisited_direction()
@@ -86,13 +86,13 @@ class Mapping:
                 # finished mapping
                 self.finish_callback()
                 return
-            node_with_unvisited = self.graph_map.get_node(nodes_with_unvisited[0])
+            node_with_unvisited = nodes_with_unvisited[0]
             path = self.PathHelper.find_path(already_visited_node, node_with_unvisited)
             self.PathHelper.start_follow_path(path)
         else:
-            self.graph_map.add_new_intersection(corner_type, posx, posy, unvisited_directions)
+            self.graph_map.add_new_intersection(corner_type, posx, posy, unvisited_directions,str(self.graph_map.num_of_nodes))
 
-        self.send_graph_status(pub_topic)
+        self.send_graph_status(self.graph_map)
 
     @staticmethod
     def get_corner_data(corner_type, qr):

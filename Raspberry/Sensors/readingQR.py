@@ -9,15 +9,20 @@ time_old = datetime.datetime.now()
 
 
 def main():
+    try:
+        read_qr()
+    except Exception as e:
+        raspi_log.log_process(f"There was faced with error on camera object: {e}")
+
+
+def read_qr():
     raspi_log.log_process(str(f"Qr started! parent id:, {os.getppid()},  self id:, {os.getpid()}"))
     mqtt_adapter.connect("qr")
     old_data = ""
-
     # set up camera objects
     cap = cv2.VideoCapture(0)
     # QR code detection object
     detector = cv2.QRCodeDetector()
-
     while True:
         # get the image
         _, img = cap.read()

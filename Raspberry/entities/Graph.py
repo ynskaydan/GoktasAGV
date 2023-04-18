@@ -9,10 +9,13 @@ class Graph:
         self.nodes = {}
         self.qr_list = {}
         self.obstacles = {}
-        self.edges = 0
+        self.edges = {}
         self.num_of_nodes = 0
         self.num_of_obstacle = 0
         self.num_of_qr = 0
+
+    def get_nodes(self):
+        return self.nodes.keys()
 
     def add_node(self, pos_x, pos_y, node_type, unvisited, node_id=None):
         self.num_of_nodes += 1
@@ -26,19 +29,20 @@ class Graph:
 
     def get_node(self, node_id):
         if node_id in self.nodes.keys():
-            return Node(self.nodes.get(node_id))
+            return self.nodes.get(node_id)
         else:
             return 0
 
     def get_last_node(self):
-        nodes_list = list(self.nodes.keys())
-        last_node = self.nodes[nodes_list[len(nodes_list) - 1]]
+        nodes_list = list(self.nodes.items())
+        last_node = nodes_list[len(self.nodes)-1]
 
         # last_node = nodes[len(self.nodes) - 1]  # Listedeki en son node çağırmak
         return last_node
 
     def add_edge(self, from_node, to_node):
         weight = 0
+
         s_node_pos_x = from_node.get_pos_x()
         s_node_pos_y = from_node.get_pos_y()
         f_node_pos_x = to_node.get_pos_x()
@@ -51,9 +55,15 @@ class Graph:
 
         from_node.add_adjacent(to_node, weight)
         to_node.add_adjacent(from_node, weight)
-        self.edges += 1
 
-    def add_new_intersection(self, corner_type, pos_x, pos_y, unvisited_directions, node_id=None):
+        if from_node not in self.edges:
+            self.edges[from_node] = []
+        if to_node not in self.edges:
+            self.edges[to_node] = []
+        self.edges[from_node].append((to_node, weight))
+        self.edges[to_node].append((from_node, weight))
+
+    def add_new_intersection(self, corner_type, pos_x, pos_y, unvisited_directions, node_id):
         new_node = self.add_node(pos_x, pos_y, corner_type, unvisited_directions, node_id)
         if len(self.nodes) > 1:
             past_node = self.get_last_node()
@@ -86,7 +96,7 @@ class Graph:
 
     def add_qr(self, qr_id, pos_x, pos_y):
         self.num_of_qr += 1
-        if id not in self.qr_list:
+        if qr_id not in self.qr_list:
             new_qr = QR(qr_id, pos_x, pos_y)
             self.qr_list[id] = new_qr
             message = str(f"New QR at ({pos_x},{pos_y}) is added to map! ")
@@ -123,7 +133,7 @@ class Graph:
 
     def get_qr(self, qr_id):
         if qr_id in self.qr_list.keys():
-            return self.nodes[qr_id]
+            return self.qr_list[qr_id]
         else:
             return 0
 
@@ -131,6 +141,6 @@ class Graph:
         nodes_having_unvisited = []
         for node_id in self.nodes.keys():
             node = self.get_node(node_id)
-            if node.get_unvisited_directions() > 0:
+            if len(node.get_unvisited_directions()) > 0:
                 nodes_having_unvisited.append(node_id)
         return nodes_having_unvisited
