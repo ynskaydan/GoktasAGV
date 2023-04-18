@@ -104,4 +104,19 @@
 3:18:9 STOP-AUTO-MOTION3:17:58 Message '3:17:58 Heartbeat started! parent id: 21040,  self id: 2696' sent to topic 'raspi-log'3:17:58 Message 'heartbeat' sent to topic 'heartbeat'3:18:3 Message '3:18:3 Connected to MQTT Broker by  mqtt-raspberry-heartbeat' sent to topic 'raspi-log'
 3:18:3 Connected to MQTT Broker by  mqtt-raspberry-heartbeat3:18:3 Message 'heartbeat' sent to topic 'heartbeat'3:18:8 Message 'heartbeat' sent to topic 'heartbeat'3:18:13 Message 'heartbeat' sent to topic 'heartbeat'3:18:18 Message 'heartbeat' sent to topic 'heartbeat'3:18:23 Message 'heartbeat' sent to topic 'heartbeat'3:18:28 Message 'heartbeat' sent to topic 'heartbeat'
 3:17:58 Heartbeat started! parent id: 21040,  self id: 26963:17:58 Message '3:17:58 Qr started! parent id:, 21040,  self id:, 5004' sent to topic 'raspi-log'
-3:17:58 Qr started! parent id:, 21040,  self id:, 5004
+3:17:58 Qr started! parent id:, 21040,  self id:, 50043:29:55 Message '3:29:55 Obstacle detection started! parent id:, 23228,  self id:, 19816' sent to topic 'raspi-log'3:29:55 Message '3:29:55 There was faced with error on lidar: could not open port '/dev/ttyS0': FileNotFoundError(2, 'Sistem belirtilen yolu bulamýyor.', None, 3)' sent to topic 'raspi-log'
+3:29:55 Obstacle detection started! parent id:, 23228,  self id:, 19816
+3:29:55 There was faced with error on lidar: could not open port '/dev/ttyS0': FileNotFoundError(2, 'Sistem belirtilen yolu bulamýyor.', None, 3)3:29:55 Message '3:29:55 Heartbeat started! parent id: 23228,  self id: 18988' sent to topic 'raspi-log'3:29:55 Message 'heartbeat' sent to topic 'heartbeat'3:30:0 Message '3:30:0 Connected to MQTT Broker by  mqtt-raspberry-heartbeat' sent to topic 'raspi-log'
+3:30:0 Connected to MQTT Broker by  mqtt-raspberry-heartbeat3:30:0 Message 'heartbeat' sent to topic 'heartbeat'3:30:5 Message 'heartbeat' sent to topic 'heartbeat'3:30:10 Message 'heartbeat' sent to topic 'heartbeat'3:30:15 Message 'heartbeat' sent to topic 'heartbeat'3:30:20 Message 'heartbeat' sent to topic 'heartbeat'3:30:25 Message 'heartbeat' sent to topic 'heartbeat'3:30:30 Message 'heartbeat' sent to topic 'heartbeat'
+3:29:55 Heartbeat started! parent id: 23228,  self id: 189883:29:55 Message '3:29:55 Lifecycle started! parent id:, 23228,  self id:, 13208' sent to topic 'raspi-log'3:29:55 Message '3:29:55 MAPPING_STATE' sent to topic 'raspi-log'3:29:55 Message '3:29:55 Subscribed to mode' sent to topic 'raspi-log'
+3:29:55 Subscribed to mode3:29:55 Message '3:29:55 Subscribed to qr' sent to topic 'raspi-log'
+3:29:55 Subscribed to qr3:29:55 Message '3:29:55 Subscribed to intersection' sent to topic 'raspi-log'
+3:29:55 Subscribed to intersection3:29:55 Message '3:29:55 Subscribed to obstacle' sent to topic 'raspi-log'
+3:29:55 Subscribed to obstacle3:29:55 Message '3:29:55 Mapping started! parent id: 23228,  self id: 13208' sent to topic 'raspi-log'3:29:55 Message '3:29:55 New QR at (10,0) is added to map! ' sent to topic 'raspi-log'3:29:55 Message '3:29:55 Past data write on graph object' sent to topic 'raspi-log'3:29:55 Message '3:29:55 Connected to MQTT Broker by  mqtt-raspberry-lifecycle-main' sent to topic 'raspi-log'
+3:29:55 Connected to MQTT Broker by  mqtt-raspberry-lifecycle-main
+3:29:55 Lifecycle started! parent id:, 23228,  self id:, 13208
+3:29:55 MAPPING_STATE
+3:29:55 Mapping started! parent id: 23228,  self id: 13208
+3:29:55 New QR at (10,0) is added to map! 
+3:29:55 Past data write on graph object3:29:55 Message '3:29:55 Qr started! parent id:, 23228,  self id:, 20548' sent to topic 'raspi-log'
+3:29:55 Qr started! parent id:, 23228,  self id:, 20548
