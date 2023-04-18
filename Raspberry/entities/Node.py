@@ -1,7 +1,8 @@
 class Node:
-    def __init__(self, posx, posy, type, unvisiteds, node_id=None):
+    def __init__(self, pos_x, pos_y, type, unvisiteds, node_id=None):
         self.id = node_id
-        self.pos = [posx, posy]
+        self.pos_x = pos_x
+        self.pos_y = pos_y
         self.adjacents = {}
         self.unvisited_directions = []
         for unvisited in unvisiteds:
@@ -32,7 +33,7 @@ class Node:
         return self.type
 
     def get_pos_x(self):
-        return int(self.pos[0])
+        return self.pos_x
 
     def get_pos_y(self):
-        return int(self.pos[1])
+        return self.pos_y
