@@ -9,7 +9,7 @@ def setup_ip():
     permissions = 0o666
     user = "goktas"
     group = "rpi"
-    ip_address = "192.168.1.100"  # Değiştirilecek IP adresi
+    ip_address = "192.168.1.101"  # Değiştirilecek IP adresi
     subnet_mask = "255.255.255.0"  # Değiştirilecek alt ağ maskesi
     default_gateway = "192.168.1.1"  # Değiştirilecek varsayılan ağ geçidi
     dns_server = "8.8.8.8"  # Değiştirilecek DNS sunucusu

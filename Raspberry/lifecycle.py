@@ -1,11 +1,10 @@
 import os
 
-import mapping
+from Processes import mapping, duty_mode
 from CrossCuttingConcerns import mqtt_adapter, raspi_log
 from Sensors import obstacle_detection
 
-db_state_a = open("./Database/db_state.txt", "a")
-db_state_r = open("./Database/db_state.txt", "r")
+
 last_state = ""
 topic = "mode"
 sub_corner_topic = "intersection"
@@ -20,9 +19,26 @@ INIT_STATE = "INIT_STATE"
 
 state = IDLE_STATE
 
+dir_path = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(os.path.dirname(dir_path),'Raspberry', 'Database', 'db_state.txt')
 
+try:
+    db_state = open(file_path,"a")
+    db_state_r = open(file_path,"r")
+except FileNotFoundError:
+    db_state = open(file_path,"w")
+
+load_points = ["Q33","Q38","Q45","Q50"]
 def callback_for_qr(client, userdata, msg):
     global mapping_mode
+    message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
+    parts = message.split(";")  # QR etiketinin standart halinde pozisyonu ayrıştırmak
+    if state == DUTY_STATE:
+        if parts[0] in load_points:
+            duty_mode.Duty.stop_in_point()
+            duty_mode.Duty.import_load()
+
+
     if state == MAPPING_STATE:
         mapping_mode.callback_for_qr(msg)
 
@@ -97,6 +113,7 @@ def run_duty_mode():
     global state
     if state == INIT_STATE:
         state = DUTY_STATE
+
         # import_load.start()
         raspi_log.log_process("Duty Active")
         save_last_state()
@@ -130,7 +147,7 @@ def process_state(message):
 
 def save_last_state():
     global state
-    db_state_a.write("\n" + state)
+    db_state.write("\n" + state)
 
 
 def get_last_state():

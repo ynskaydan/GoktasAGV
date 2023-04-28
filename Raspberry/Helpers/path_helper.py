@@ -1,5 +1,6 @@
-import arduino_manager
-import mapping
+from datetime import time
+
+from Services import arduino_manager
 from CrossCuttingConcerns import raspi_log
 from entities.Node import Node
 
@@ -63,15 +64,58 @@ class PathHelper:
         while path[-1] != start_node:
             path.append(previous_nodes[path[-1]])
         path.reverse()
-
+        raspi_log.log_process("Path is created. Path will be followed.")
         return path
         # path finding algorithm: djikstra or some graph traversal
 
     def start_follow_path(self, graph, path):
         self.set_is_path_following_flag(True)
-        direction = self.required_direction(path[0], path[1])
-        turnTo(direction)
+        raspi_log.log_process("Path following is started.")
+        current_node_index = 0
+        direction = self.required_direction(graph,path[current_node_index], path[current_node_index + 1])
+        arduino_manager.turn_to_direction(direction)
         arduino_manager.start_autonomous_motion_of_vehicle()
 
-    def required_direction(self, current_node, next_node):
-        return "N"
+        while self.is_path_following:
+            # Check if we have reached the end of the path
+            if current_node_index == len(path) - 1:
+                self.set_is_path_following_flag(False)
+                arduino_manager.stop_autonomous_motion_of_vehicle()
+                break
+
+            # Check if we have reached the next node on the path
+            if self.check_if_at_node(path[current_node_index + 1]):
+                current_node_index += 1
+                if current_node_index == len(path) - 1:
+                    self.set_is_path_following_flag(False)
+                    arduino_manager.stop_autonomous_motion_of_vehicle()
+                    break
+                direction = self.required_direction(path[current_node_index], path[current_node_index + 1])
+                arduino_manager.turn_to_direction(direction)
+
+            time.sleep(0.1)
+
+    @staticmethod
+    def required_direction(graph, current_node_index, next_node_index):
+        #calculates required direction
+        current_node = graph.get_node(current_node_index)
+        next_node = graph.get_node(next_node_index)
+
+        if current_node.get_pos_x() == next_node.get_pos_x():
+            if current_node.get_pos_y() < next_node.get_pos_y():
+                return "forward"
+            elif current_node.get_pos_y == next_node.get_pos_y():
+                return "stop"
+            else:
+                return "backward"
+        else:
+            if current_node.get_pos_x < next_node.get_pos_x:
+                return "right"
+            else:
+                return "left"
+
+    def check_if_at_node(self,node):
+        if self.current_node != node:
+            return False
+        else:
+            return True

@@ -1,16 +1,18 @@
 import os
-from graph_converter import convert_json
-import imu_manager
+from Helpers.graph_converter import convert_json
+from Services import arduino_manager
 from CrossCuttingConcerns import mqtt_adapter, raspi_log
 from Helpers import path_helper
 from entities.Graph import Graph
-from graph_converter import read_database
-import arduino_manager
+from Helpers.graph_converter import read_database
 
-
-db_graph_a = open("./Database/db_graph.txt", "a")
-db_graph_r = open("./Database/db_graph.txt", "r")
-
+dir_path = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(os.path.dirname(dir_path), 'Database', 'db_graph.txt')
+try:
+    db_graph = open(file_path,"a")
+except FileNotFoundError:
+    db_graph = open(file_path, "w")
+direction = "E"
 new_direction = ""
 isPathFollowing = False
 pub_topic = "mapping"
@@ -23,7 +25,7 @@ class Mapping:
         raspi_log.log_process(str(f"Mapping started! parent id: {os.getppid()},  self id: {os.getpid()}"))
         self.graph_map = Graph()
         self.PathHelper = path_helper.PathHelper()
-        check_database_update_graph = read_database(db_graph_r, self.graph_map)
+        check_database_update_graph = read_database(self.graph_map)
         if not check_database_update_graph:
             self.graph_map.add_new_intersection("Start", 0, 0,{},"S")
             message = str(f"There was not a saved map to be found. Initial steps were executed to generate the map.")
@@ -32,7 +34,8 @@ class Mapping:
             raspi_log.log_process(str("Past data write on graph object"))
 
     def callback_for_obstacle(self, msg):
-        last_node = self.graph_map.get_last_node()
+        last_node_id = self.graph_map.get_last_node_id()
+        last_node = self.graph_map.get_node(last_node_id)
         result_add_obstacle = self.graph_map.add_obstacle(last_node.get_pos_x(), 80)
         if result_add_obstacle == 0:
             raspi_log.log_process(str("Obstacle already in list"))
@@ -49,7 +52,7 @@ class Mapping:
             self.send_graph_status(self.graph_map)
 
     def callback_for_corner(self, msg):
-        global new_direction
+        global new_direction, direction
         corner_type = msg
         last_qr = self.graph_map.get_last_qr()
         corner = self.get_corner_data(corner_type, last_qr)
@@ -67,12 +70,12 @@ class Mapping:
                 # after following path, the vehichle is on nodeWithUnvisited
 
                 unvisited_direction = self.graph_map.visit_unvisited_direction(current_node) #Visit unvisited means turns unvisited direction to visited
-                arduino_manager.send_arduino_to_decision(corner_type,unvisited_direction) # Turn to unvisited direction
+                arduino_manager.send_arduino_to_decision(corner_type, unvisited_direction) # Turn to unvisited direction
                 #turnToUnvisitedDirectionOfTheNodeWithUnvisited()
                 arduino_manager.stop_autonomous_motion_of_vehicle()
             elif corner_type == "T" or corner_type == "LEFT_T" or corner_type == "RIGHT_T":
                 direction = self.PathHelper.required_direction(current_node,self.PathHelper.get_next_node())
-                arduino_manager.send_arduino_to_decision(corner_type,direction)
+                arduino_manager.send_arduino_to_decision(corner_type, direction)
             return
 
         check_node_exist = self.graph_map.check_node_already_exist(posx, posy)
@@ -82,7 +85,7 @@ class Mapping:
             already_visited_node = self.graph_map.already_visited_node(posx, posy)
             arduino_manager.stop_autonomous_motion_of_vehicle()
             nodes_with_unvisited = self.graph_map.nodes_having_unvisited_direction()
-            if nodes_with_unvisited.count == 0:
+            if len(nodes_with_unvisited) == 0:
                 # finished mapping
                 self.finish_callback()
                 return
@@ -93,22 +96,23 @@ class Mapping:
             self.graph_map.add_new_intersection(corner_type, posx, posy, unvisited_directions,str(self.graph_map.num_of_nodes))
 
         self.send_graph_status(self.graph_map)
+        direction = new_direction
 
     @staticmethod
     def get_corner_data(corner_type, qr):
-        direction = imu_manager.get_direction()
+        global direction
         corner_actions = {
             "LEFT_L": {
-                "N": (0, 10, "W"),
-                "E": (-10, 0, "N"),
-                "S": (0, -10, "E"),
-                "W": (10, 0, "S"),
+                "N": (0, 1000, "W"),
+                "E": (-1000, 0, "N"),
+                "S": (0, -1000, "E"),
+                "W": (1000, 0, "S"),
             },
             "RIGHT_L": {
-                "N": (0, 10, "E"),
-                "E": (-10, 0, "S"),
-                "S": (0, -10, "W"),
-                "W": (-10, 0, "N"),
+                "N": (0, 1000, "E"),
+                "E": (-1000, 0, "S"),
+                "S": (0, -1000, "W"),
+                "W": (-1000, 0, "N"),
             },
             "T": {
                 "N": (0, 10, "W", ["E"]),
@@ -142,12 +146,12 @@ class Mapping:
         return posx, posy, new_direction, unvisited_directions
 
     @staticmethod
-    def get_new_direction():
-        global new_direction
-        return new_direction
+    def get_direction():
+        global direction
+        return direction
 
     @staticmethod
     def send_graph_status(graph):
         json_graph = convert_json(graph)
-        db_graph_a.write(json_graph + "\n")
+        db_graph.write(json_graph + "\n")
         mqtt_adapter.publish(json_graph, pub_topic)

@@ -1,9 +1,10 @@
 # -*- coding: utf-8
 import os
+import time
 
 from serial import Serial
 
-import arduino_manager
+from Services import arduino_manager
 from CrossCuttingConcerns import mqtt_adapter, raspi_log
 
 topic = "obstacle_detection"
@@ -45,12 +46,17 @@ def get_lidar_data(ser):
                 distance = recv[2] + recv[3] * 256
                 strength = recv[4] + recv[5] * 256
                 if distance < stop_distance:
+                    arduino_manager.stop_autonomous_motion_of_vehicle()
                     if not obstacle_state:
                         result = f"obstacle detected! {distance}"
                         raspi_log.log_process(result)
-                        mqtt_adapter.publish(result, topic)
-                        arduino_manager.start_obstacle_flow(distance)
-                        set_obstacle_state(True)
+                        time.sleep(15)
+                        if distance<stop_distance:
+                            mqtt_adapter.publish(result, topic)
+                            arduino_manager.start_obstacle_flow(distance)
+                            set_obstacle_state(True)
+                        else:
+                            arduino_manager.start_autonomous_motion_of_vehicle()
 
 
 def set_obstacle_state(bool):

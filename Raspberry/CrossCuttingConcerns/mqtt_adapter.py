@@ -6,17 +6,20 @@ from paho.mqtt import client as mqtt_client
 pub_topic = "raspi-log"
 dir_path = os.path.dirname(os.path.abspath(__file__))
 file_path = os.path.join(os.path.dirname(dir_path), 'Database', 'db_logs.txt')
-db_logs = open(file_path, "a")
+try:
+    db_logs = open(file_path,"a")
+except FileNotFoundError:
+    db_logs = open(file_path, "w")
 
 
 def connect(cid):
     global client
 
-    broker = "localhost"
+    broker = "192.168.1.101"
     port = 1883
     client_id = f'mqtt-raspberry-{cid}'
     username = 'goktas'
-    password = '12345678'
+    password = '123456'
 
     client = mqtt_client.Client(client_id)
     client.username_pw_set(username, password)

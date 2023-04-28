@@ -17,32 +17,22 @@ class Graph:
     def get_nodes(self):
         return self.nodes.keys()
 
-    def add_node(self, pos_x, pos_y, node_type, unvisited, node_id=None):
+    def add_node(self, pos_x, pos_y, node_type, unvisited, node_id):
         self.num_of_nodes += 1
-        new_node = Node(pos_x, pos_y, node_type, unvisited, node_id or str(self.num_of_nodes))
+        new_node = Node(pos_x, pos_y, node_type, unvisited, node_id)
         self.nodes[new_node.get_id()] = new_node
         return new_node
 
-    def get_edge_weight(self, from_id, to_id):
-        weight = self.nodes[from_id].adjacents[to_id]
-        return weight
-
-    def get_node(self, node_id):
-        if node_id in self.nodes.keys():
-            return self.nodes.get(node_id)
-        else:
-            return 0
-
-    def get_last_node(self):
+    def get_last_node_id(self):
         nodes_list_keys = list(self.nodes.keys())
-        last_node_id = nodes_list_keys[len(nodes_list_keys) - 1]
-        last_node = self.get_node(last_node_id)
-        # last_node = nodes[len(self.nodes) - 1]  # Listedeki en son node çağırmak
-        return last_node
+        if len(nodes_list_keys) > 0:
+            last_node_id = nodes_list_keys[len(nodes_list_keys) - 1]
+            return last_node_id
 
-    def add_edge(self, from_node, to_node):
+    def add_edge(self, from_node_id, to_node_id):
         weight = 0
-
+        from_node = self.get_node(from_node_id)
+        to_node = self.get_node(to_node_id)
         s_node_pos_x = from_node.get_pos_x()
         s_node_pos_y = from_node.get_pos_y()
         f_node_pos_x = to_node.get_pos_x()
@@ -52,7 +42,6 @@ class Graph:
             weight = abs(f_node_pos_y - s_node_pos_y)
         if f_node_pos_y - s_node_pos_y == 0:
             weight = abs(f_node_pos_x - s_node_pos_x)
-
         from_node.add_adjacent(to_node, weight)
         to_node.add_adjacent(from_node, weight)
 
@@ -64,10 +53,10 @@ class Graph:
         self.edges[to_node].append((from_node, weight))
 
     def add_new_intersection(self, corner_type, pos_x, pos_y, unvisited_directions, node_id):
+        past_node_id = self.get_last_node_id()
         new_node = self.add_node(pos_x, pos_y, corner_type, unvisited_directions, node_id)
         if len(self.nodes) > 1:
-            past_node = self.get_last_node()
-            self.add_edge(past_node, new_node)
+            self.add_edge(past_node_id, new_node.get_id())
         message = str(f"New intersection at ({pos_x},{pos_y}) is added to map! ")
         raspi_log.log_process(message)
 
@@ -124,6 +113,14 @@ class Graph:
         last_qr = self.get_qr(last_key)
 
         return last_qr
+
+    def get_edge_weight(self, from_id, to_id):
+        weight = self.nodes[from_id].adjacents[to_id]
+        return weight
+
+    def get_node(self, node_id):
+        if node_id in self.nodes.keys():
+            return self.nodes[node_id]
 
     def get_obstacle(self, obs_id):
         if obs_id in self.obstacles.keys():

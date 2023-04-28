@@ -1,4 +1,13 @@
 import json
+import os
+from CrossCuttingConcerns import raspi_log
+
+dir_path = os.path.dirname(os.path.abspath(__file__))
+file_path = os.path.join(os.path.dirname(dir_path), 'Database', 'db_graph.txt')
+try:
+    db_graph = open(file_path,"r")
+except FileNotFoundError:
+    raspi_log.log_process("Graph database not found")
 
 
 def convert_json(graph):
@@ -37,8 +46,8 @@ def convert_json(graph):
     return converted_json
 
 
-def read_database(db, graph):
-    lines = db.readlines()
+def read_database(graph):
+    lines = db_graph.readlines()
     if len(lines) == 0:
         return False
     else:
@@ -62,7 +71,7 @@ def read_database(db, graph):
                     adjacent = graph.get_node(adjacent_id)
                     if adjacent == 0:
                         continue
-                    graph.add_edge(node, adjacent)
+                    graph.add_edge(node.get_id(), adjacent)
 
         for qr_code in qr_codes:
             qr_id = qr_code['id']
