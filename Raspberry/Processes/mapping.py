@@ -94,6 +94,8 @@ class Mapping:
             self.PathHelper.start_follow_path(path)
         else:
             self.graph_map.add_new_intersection(corner_type, posx, posy, unvisited_directions,str(self.graph_map.num_of_nodes))
+            if corner_type == "T" or corner_type == "LEFT_T" or corner_type == "RIGHT_T":
+                arduino_manager.send_arduino_to_decision(corner_type,new_direction)
 
         self.send_graph_status(self.graph_map)
         direction = new_direction
@@ -115,18 +117,18 @@ class Mapping:
                 "W": (-1000, 0, "N"),
             },
             "T": {
-                "N": (0, 10, "W", ["E"]),
-                "E": (-10, 0, "E", ["S"]),
-                "S": (0, -10, "W", ["S"]),
-                "W": (10, 0, "W", ["S"]),
+                "N": (0, 1000, "W", ["E"]),
+                "E": (-1000, 0, "E", ["S"]),
+                "S": (0, -1000, "W", ["S"]),
+                "W": (1000, 0, "W", ["S"]),
             },
             "RIGHT_T": {
-                "E": (-10, 0, "E", ["S"]),
-                "W": (10, 0, "W", ["N"]),
+                "E": (-1000, 0, "E", ["S"]),
+                "W": (1000, 0, "W", ["N"]),
             },
             "LEFT_T": {
-                "E": (-10, 0, "E", ["N"]),
-                "W": (10, 0, "W", ["S"]),
+                "E": (-1000, 0, "E", ["N"]),
+                "W": (1000, 0, "W", ["S"]),
             },
         }
 
