@@ -76,24 +76,6 @@ class PathHelper:
         arduino_manager.turn_to_direction(direction)
         arduino_manager.start_autonomous_motion_of_vehicle()
 
-        while self.is_path_following:
-            # Check if we have reached the end of the path
-            if current_node_index == len(path) - 1:
-                self.set_is_path_following_flag(False)
-                arduino_manager.stop_autonomous_motion_of_vehicle()
-                break
-
-            # Check if we have reached the next node on the path
-            if self.check_if_at_node(path[current_node_index + 1]):
-                current_node_index += 1
-                if current_node_index == len(path) - 1:
-                    self.set_is_path_following_flag(False)
-                    arduino_manager.stop_autonomous_motion_of_vehicle()
-                    break
-                direction = self.required_direction(path[current_node_index], path[current_node_index + 1])
-                arduino_manager.turn_to_direction(direction)
-
-            time.sleep(0.1)
 
     @staticmethod
     def required_direction(graph, current_node_index, next_node_index):

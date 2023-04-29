@@ -12,19 +12,9 @@ pub_load_topic = "load"
 
 def main():
     mqtt_adapter.connect("ard")
-    mqtt_adapter.subscribe(sub_intersection_topic, callback_for_intersection())
-
-
-def callback_for_intersection(client, userdata, msg):
-    message = msg.payload.decode('utf-8')  # takes LEFT_T,LEFT_L,RIGHT_L etc
-    new_direction = ""
-    if lifecycle.get_last_state() == "explore":
-        new_direction = mapping.Mapping.get_new_direction()
-    send_arduino_to_decision(message, new_direction)
-
 
 def send_arduino_to_decision(corner_type, new_direction):
-    prev_direction = mapping.direction
+    prev_direction = mapping.Mapping.get_direction()
     movement_dict = {  # gitmesini istediğim directiona göre vermem gerekiyor?
         ("LEFT_T", "S"): "LEFT",
         ("LEFT_T", "W"): "FORWARD",
@@ -42,9 +32,11 @@ def send_arduino_to_decision(corner_type, new_direction):
 
     # Use the dictionary to determine the desired movement action based on the given corner type and direction
     if (corner_type, new_direction) in movement_dict:
-        mqtt_adapter.publish(movement_dict[(corner_type, new_direction)], sub_intersection_topic)
+        mqtt_adapter.publish(movement_dict[(corner_type, new_direction)], pub_auto_motion_control)
+        raspi_log.log_process(movement_dict[(corner_type, new_direction)])
     elif corner_type == "T" and (prev_direction, new_direction) in movement_dict:
-        mqtt_adapter.publish(movement_dict[(corner_type, (prev_direction, new_direction))], sub_intersection_topic)
+        mqtt_adapter.publish(movement_dict[(corner_type, (prev_direction, new_direction))], pub_auto_motion_control)
+        raspi_log.log_process(movement_dict[(corner_type, new_direction)])
 
 
 def start_obstacle_flow(distance):

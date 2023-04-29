@@ -32,11 +32,11 @@ def convert_json(graph):
             {"id": node.get_id(), "pos": {"x": x, "y": y}, "type": node.get_type(), "adjacents": list_adjacents,
              "unvisitedDirections": unvisited_directions})
 
-    for qr_id in graph.qr_list:
+    for qr_id in graph.get_qr_list():
         qr = graph.get_qr(qr_id)
         qr_list.append({"id": qr.get_id(), "pos": {"x": qr.get_pos_x(), "y": qr.get_pos_y()}})
 
-    for obstacle_id in graph.obstacles:
+    for obstacle_id in graph.get_obstacles():
         obstacle = graph.get_obstacle(obstacle_id)
         obstacles.append({"id": obstacle.get_id(), "pos": {"x": obstacle.get_posx(), "y": obstacle.get_posy()}})
 

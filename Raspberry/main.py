@@ -1,5 +1,5 @@
 
-from Processes import heartbeat, readingQR  # readingQR
+from Processes import heartbeat, readingQR
 import lifecycle
 from CrossCuttingConcerns import mqtt_adapter
 from Helpers import setup_helper
@@ -48,8 +48,8 @@ def main():
 
     # sendReadyMessage()
 
-    process_qr.join()
-    process_heartbeat.join()
+    #process_qr.join()
+    #process_heartbeat.join()
     process_life_cycle.join()
 
 

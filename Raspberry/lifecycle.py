@@ -1,21 +1,24 @@
 import os
 
+from Helpers.path_helper import PathHelper
 from Processes import mapping, duty_mode
 from CrossCuttingConcerns import mqtt_adapter, raspi_log
 from Sensors import obstacle_detection
-
+from Services import direction_manager
 
 last_state = ""
 topic = "mode"
 sub_corner_topic = "intersection"
 sub_obstacle_topic = "obstacle"
 sub_qr_topic = "qr"
+sub_scenario_topic = "scenario"
+sub_direction_topic = "direction"
 pub_topic = "mapping"
-
 IDLE_STATE = "IDLE_STATE"
 MAPPING_STATE = "MAPPING_STATE"
 DUTY_STATE = "DUTY_STATE"
 INIT_STATE = "INIT_STATE"
+
 
 state = IDLE_STATE
 
@@ -42,12 +45,24 @@ def callback_for_qr(client, userdata, msg):
     if state == MAPPING_STATE:
         mapping_mode.callback_for_qr(msg)
 
+def callback_for_direction(client,userdata,msg):
+    global mapping_mode
+    if state == MAPPING_STATE:
+        message = msg.payload.decode("utf-8")
+        mapping_mode.callback_for_direction(message)
+
 
 def callback_for_corner(client, userdata, msg):
     global mapping_mode
     message = msg.payload.decode('utf-8')
     if state == MAPPING_STATE:
         mapping_mode.callback_for_corner(message)
+
+def callback_for_senario(client,userdata,msg):
+    message = msg.payload.decode('utf-8')
+    if state == INIT_STATE:
+        PathHelper.start_follow_path(message)
+
 
 
 def callback_for_obstacle(client, userdata, msg):
@@ -61,8 +76,12 @@ def callback_for_obstacle(client, userdata, msg):
 def main():
     global mapping_mode
     global state
+    global direction_controller
+
     raspi_log.log_process(str(f"Lifecycle started! parent id:, {os.getppid()},  self id:, {os.getpid()}"))
     mqtt_adapter.connect("lifecycle-main")
+    direction_controller = direction_manager.Direction()
+
     lines = db_state_r.readlines()
     if len(lines) > 0:
         state = str(lines[len(lines) - 1])
@@ -73,9 +92,13 @@ def main():
     # mapping_mode = mapping.Mapping(finish_callback)
 
     mqtt_adapter.subscribe(topic, on_message)
+    mqtt_adapter.subscribe(sub_scenario_topic, callback_for_senario)
+    mqtt_adapter.subscribe(sub_direction_topic, callback_for_direction)
     mqtt_adapter.subscribe(sub_qr_topic, callback_for_qr)
     mqtt_adapter.subscribe(sub_corner_topic, callback_for_corner)
     mqtt_adapter.subscribe(sub_obstacle_topic, callback_for_obstacle)
+
+
     process_state(state)
     mqtt_adapter.loop_forever()
 

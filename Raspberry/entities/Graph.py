@@ -87,7 +87,7 @@ class Graph:
         self.num_of_qr += 1
         if qr_id not in self.qr_list:
             new_qr = QR(qr_id, pos_x, pos_y)
-            self.qr_list[id] = new_qr
+            self.qr_list[qr_id] = new_qr
             message = str(f"New QR at ({pos_x},{pos_y}) is added to map! ")
             raspi_log.log_process(message)
             return new_qr
@@ -127,12 +127,15 @@ class Graph:
             return self.nodes[obs_id]
         else:
             return 0
+    def get_qr_list(self):
+        return self.qr_list.keys()
+
+    def get_obstacles(self):
+        return self.obstacles.keys()
 
     def get_qr(self, qr_id):
-        if qr_id in self.qr_list.keys():
-            return self.qr_list[qr_id]
-        else:
-            return 0
+        return self.qr_list[qr_id]
+
 
     def nodes_having_unvisited_direction(self):
         nodes_having_unvisited = []
