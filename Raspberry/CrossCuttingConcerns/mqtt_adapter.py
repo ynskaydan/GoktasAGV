@@ -15,7 +15,7 @@ except FileNotFoundError:
 def connect(cid):
     global client
 
-    broker = "192.168.1.101"
+    broker = "localhost"
     port = 1883
     client_id = f'mqtt-raspberry-{cid}'
     username = 'goktas'

@@ -42,9 +42,9 @@ class Mapping:
         self.direction_controller.set_direction(direction_parts[0])
         check_database_update_graph = read_database(self.graph_map)
         if not check_database_update_graph:
-            if direction_parts[1] == "S2":
+            if direction_parts[1] == "S1":
                 self.graph_map.add_new_intersection("Start", 8000, 12500,{},"S2")
-            elif direction_parts[1] == "S1":
+            elif direction_parts[1] == "S2":
                 self.graph_map.add_new_intersection("Start", 8000, 0,{},"S1")
 
             message = str(f"There was not a saved map to be found. Initial steps were executed to generate the map.")

@@ -21,7 +21,10 @@ class Mapper extends StatefulWidget {
 
 class _MapperState extends State<Mapper> {
   final client = UniversalMqttClient(
-    broker: Uri.parse('ws://localhost:8080'),
+    //broker: Uri.parse('ws://192.168.1.101:8080'),
+    broker: Uri.parse('ws://192.168.1.101:8080'),
+    /*  password: "123456",
+    username: "goktas", */
     autoReconnect: true,
   );
 
@@ -79,19 +82,22 @@ class MapPainter extends CustomPainter {
   Future<void> paint(Canvas canvas, Size size) async {
     if (nodes.isEmpty || qrs.isEmpty) return;
     double coefficient = 0;
-    coefficient = scaleX / 1600;
+    coefficient = scaleY / 13000;
     final paint = Paint()
       ..color = Colors.black
-      ..strokeWidth = 2
+      ..strokeWidth = 3
       ..style = PaintingStyle.fill;
     final linePaint = Paint()
       ..color = Colors.yellow
-      ..strokeWidth = 2
+      ..strokeWidth = 3
       ..style = PaintingStyle.fill;
-
+    final nodePaint = Paint()
+      ..color = Colors.red
+      ..strokeWidth = 3
+      ..style = PaintingStyle.fill;
     final qrPaint = Paint()
       ..color = Colors.blue
-      ..strokeWidth = 1
+      ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
     final obstaclePaint = Paint()
@@ -99,7 +105,7 @@ class MapPainter extends CustomPainter {
       ..strokeWidth = 3
       ..style = PaintingStyle.stroke;
 
-    final radius = 10.0;
+    final radius = 20.0;
 
     // Draw the nodes
     for (final node in nodes) {
@@ -109,7 +115,8 @@ class MapPainter extends CustomPainter {
       final y = pos['y'] as double;
       double a = scaleX - (coefficient * x);
       double b = scaleY - (coefficient * y);
-      canvas.drawCircle(Offset(a, b), radius, paint);
+      //b == b / 3;
+      canvas.drawCircle(Offset(a, b), radius, nodePaint);
     }
 
     for (final qr in qrs) {
@@ -118,6 +125,7 @@ class MapPainter extends CustomPainter {
       final y = pos['y'] as double;
       double a = scaleX - (coefficient * x);
       double b = scaleY - (coefficient * y);
+      //b == b / 3;
       canvas.drawCircle(Offset(a, b), radius, qrPaint);
     }
     // for (final obs in obstacles) {
@@ -136,12 +144,14 @@ class MapPainter extends CustomPainter {
       final y = pos['y'] as double;
       double a = scaleX - (coefficient * x);
       double b = scaleY - (coefficient * y);
+      // b == b / 3;
       final adjacents = node.adjacents;
       for (final adj in adjacents) {
         final adjacentNode = nodes.firstWhere((n) => n.id == adj);
         final adjacentPos = adjacentNode.pos;
         final adjX = adjacentPos['x'] as double;
         final adjY = adjacentPos['y'] as double;
+        //adjY = adjY / 3;
         double aAdj = scaleX - (coefficient * adjX);
         double bAdj = scaleY - (coefficient * adjY);
 

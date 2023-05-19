@@ -21,7 +21,10 @@ class EmergencyStop extends StatefulWidget {
 class _EmergencyStopState extends State<EmergencyStop> {
   var emergencyTopic = "emergency";
   final client = UniversalMqttClient(
-    broker: Uri.parse('ws://localhost:8080'),
+    //broker: Uri.parse('ws://192.168.1.101:8080'),
+    broker: Uri.parse('ws://192.168.1.101:8080'),
+    /* password: "123456",
+    username: "goktas", */
     autoReconnect: true,
   );
   void initState() {

@@ -19,7 +19,10 @@ class EntrySenario extends StatefulWidget {
 
 class _EntrySenarioState extends State<EntrySenario> {
   final client = UniversalMqttClient(
-    broker: Uri.parse('ws://localhost:8080'),
+    //broker: Uri.parse('ws://192.168.1.101:8080'),
+    broker: Uri.parse('ws://192.168.1.101:8080'),
+    //password: "123456",
+    //username: "goktas",
     autoReconnect: true,
   );
   @override
@@ -35,9 +38,9 @@ class _EntrySenarioState extends State<EntrySenario> {
     final subscription = client
         .handleString('mappingState', MqttQos.atLeastOnce)
         .listen((message) {
-      if (message.toString() == "mappingFinished") mappingState = false;
-      if (message.toString() == "startTheMapping") mappingState = true;
-      print(message.toString());
+      if (message.toString() == "mappingFinished") mappingState = true;
+      if (message.toString() == "startTheMapping") mappingState = false;
+      //print(message.toString());
       // obstacles = graph.obstacles;
     });
   }
@@ -92,6 +95,93 @@ class _EntrySenarioState extends State<EntrySenario> {
   }
 }
 
+class SendDirection extends StatefulWidget {
+  const SendDirection({super.key});
+
+  @override
+  State<SendDirection> createState() => _SendDirectionState();
+}
+
+class _SendDirectionState extends State<SendDirection> {
+  final client = UniversalMqttClient(
+    //broker: Uri.parse('ws://192.168.1.101:8080'),
+    broker: Uri.parse('ws://192.168.1.101:8080'),
+    //password: "123456",
+    //username: "goktas",
+    autoReconnect: true,
+  );
+  @override
+  void initState() {
+    connectionSenario();
+    super.initState();
+  }
+
+  String directionTopic = "direction";
+  String pubTopic = "scenario";
+  String subTopic = "subScenario";
+  void connectionSenario() async {
+    await client.connect();
+    final subscription = client
+        .handleString('mappingState', MqttQos.atLeastOnce)
+        .listen((message) {
+      if (message.toString() == "mappingFinished") mappingState = false;
+      if (message.toString() == "startTheMapping") mappingState = true;
+      //  print(message.toString());
+      // obstacles = graph.obstacles;
+    });
+  }
+
+  void _sendDirection() {
+    setState(() {
+      client.publishString(directionTopic, _enteredText, MqttQos.atLeastOnce);
+      //print('SENARYO: $_enteredText');
+    });
+  }
+
+  String _enteredText = "";
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: SizedBox(
+            width: 200,
+            height: 50,
+            child: TextField(
+              onChanged: (text) {
+                setState(() {
+                  _enteredText = text;
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Bir metin girin',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+          ),
+        ),
+        SizedBox(width: 10),
+        ElevatedButton(
+          onPressed: (){
+_sendDirection();
+          },
+          child: SizedBox(
+              height: 50,
+              child: Center(
+                child: Text(
+                  "Gönder",
+                  style: const TextStyle(fontSize: 20, color: Colors.white),
+                  textAlign: TextAlign.center,
+                ),
+              )),
+        ),
+      ],
+    );
+  }
+}
+
 class MainButtons extends StatefulWidget {
   const MainButtons({super.key});
 
@@ -101,7 +191,9 @@ class MainButtons extends StatefulWidget {
 
 class _MainButtonsState extends State<MainButtons> {
   final client = UniversalMqttClient(
-    broker: Uri.parse('ws://localhost:8080'),
+    broker: Uri.parse('ws://192.168.1.101:8080'),
+    //password: "123456",
+    //username: "goktas",
     autoReconnect: true,
   );
 
@@ -113,15 +205,14 @@ class _MainButtonsState extends State<MainButtons> {
 
   void _startTheCalibration() {
     setState(() {
-      client.publishString("mode", 'startTheCalibration', MqttQos.atLeastOnce);
+      client.publishString("mode", 'CALIBRATION_STATE', MqttQos.atLeastOnce);
     });
   }
 
   void _startTheMapping() {
     setState(() {
       print(mappingState);
-      client.publishString(
-          "mappingState", 'startTheMapping', MqttQos.atLeastOnce);
+      client.publishString("mode", 'MAPPING_STATE', MqttQos.atLeastOnce);
     });
   }
 
@@ -153,6 +244,7 @@ class _MainButtonsState extends State<MainButtons> {
                 ElevatedButton(
                     onPressed: () {
                       _startTheMapping();
+                      print("çaıştı");
                     },
                     child: Text("Haritalandırmaya Başla")),
                 SizedBox(
@@ -181,7 +273,9 @@ class VehicleStatus extends StatefulWidget {
 
 class _VehicleStatusState extends State<VehicleStatus> {
   final client = UniversalMqttClient(
-    broker: Uri.parse('ws://localhost:8080'),
+    broker: Uri.parse('ws://192.168.1.101:8080'),
+    //password: "123456",
+    //username: "goktas",
     autoReconnect: true,
   );
   String vehicleStaus = "";

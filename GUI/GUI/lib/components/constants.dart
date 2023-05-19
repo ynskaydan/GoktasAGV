@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:goktasgui/components/senario.dart';
 import 'package:mqtt_client/mqtt_client.dart';
 import 'package:universal_mqtt_client/universal_mqtt_client.dart';
-
 import 'mapping.dart';
 
 Map<int, bool> isPressedMap = {
@@ -13,7 +12,7 @@ Map<int, bool> isPressedMap = {
 };
 int x = 0;
 int y = 0;
-final String pubTopic = "goktasagv";
+String pubTopic = "goktasagv";
 
 class Constant {
   // Colors
@@ -50,7 +49,7 @@ class _DataComponentState extends State<DataComponent> {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          color: Color.fromRGBO(40, 40, 40, 1.0),
+          color: const Color.fromRGBO(40, 40, 40, 1.0),
         ),
         height: widget.heightSize,
         width: widget.widthSize,

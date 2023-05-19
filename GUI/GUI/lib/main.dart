@@ -21,11 +21,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // if (mappingState) {
-    //   haritaBaslik = "Harita Oluşturuluyor...";
-    //} else {
-    //  haritaBaslik = "Harita oluşturuldu";
-    // }
     return MaterialApp(
       title: 'Goktas AGV Control Panel',
       theme: ThemeData(
@@ -46,7 +41,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  var _focusNode = FocusNode();
   String _timeString;
   @override
   void initState() {
@@ -108,7 +102,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           // ignore: prefer_const_literals_to_create_immutables
                           children: [
                             DataComponent(
-                              contentData: EmergencyStop(),
+                              contentData: const EmergencyStop(),
                               subTitle: "Acil Durdurma Butonu",
                               widthSize:
                                   MediaQuery.of(context).size.width / 4 + 20,
@@ -183,11 +177,22 @@ class _MyHomePageState extends State<MyHomePage> {
                       widthSize: MediaQuery.of(context).size.width / 1.8,
                       heightSize: MediaQuery.of(context).size.height / 2 + 40,
                     ),
-                    DataComponent(
-                      subTitle: "Senaryo",
-                      contentData: EntrySenario(),
-                      widthSize: MediaQuery.of(context).size.width / 1.8,
-                      heightSize: MediaQuery.of(context).size.height / 6,
+                    Row(
+                      children: [
+                        DataComponent(
+                          subTitle: "Senaryo",
+                          contentData: EntrySenario(),
+                          widthSize:
+                              MediaQuery.of(context).size.width / 3.6 - 10,
+                          heightSize: MediaQuery.of(context).size.height / 6,
+                        ),
+                        DataComponent(
+                            subTitle: "Yön",
+                            contentData: SendDirection(),
+                            widthSize:
+                                MediaQuery.of(context).size.width / 3.6 - 10,
+                            heightSize: MediaQuery.of(context).size.height / 6)
+                      ],
                     ),
                   ],
                 ),

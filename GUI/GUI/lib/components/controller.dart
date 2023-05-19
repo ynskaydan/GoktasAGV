@@ -15,10 +15,13 @@ class Controller extends StatefulWidget {
   State<Controller> createState() => _ControllerState();
 }
 
-//192.168.1.101:8080
+
 class _ControllerState extends State<Controller> {
   final client = UniversalMqttClient(
-    broker: Uri.parse('ws://localhost:8080'),
+    //broker: Uri.parse('ws://192.168.1.101:8080'),
+    broker: Uri.parse('ws://192.168.1.101:8080'),
+    /*  password: "123456",
+    username: "goktas", */
     autoReconnect: true,
   );
 
@@ -41,7 +44,7 @@ class _ControllerState extends State<Controller> {
   int a = 0;
   int b = 0;
   String pubTopic = "move";
-  String modeTopic = "mode";
+  String modeTopic = "move";
   String text = "No Sended Message";
 
   void _moveForward() {
@@ -107,12 +110,14 @@ class _ControllerState extends State<Controller> {
   void _manuelControl() {
     setState(() {
       client.publishString(modeTopic, 'manual', MqttQos.atLeastOnce);
+      print("manuel mesajı gönderiliri");
     });
   }
 
   void _autonomousControl() {
     setState(() {
       client.publishString(modeTopic, 'autonomous', MqttQos.atLeastOnce);
+      print("otonom mesajı gönderildi");
     });
   }
 
