@@ -2,7 +2,7 @@ import os
 
 from Helpers.path_helper import PathHelper
 from Processes import mapping, duty_mode
-from CrossCuttingConcerns import mqtt_adapter, raspi_log
+from CrossCuttingConcerns import raspi_log
 from Sensors import obstacle_detection
 from Services import direction_manager
 
@@ -79,7 +79,7 @@ def main():
     global direction_controller
 
     raspi_log.log_process(str(f"Lifecycle started! parent id:, {os.getppid()},  self id:, {os.getpid()}"))
-    mqtt_adapter.connect("lifecycle-main")
+    #mqtt_adapter.connect("lifecycle-main")
     direction_controller = direction_manager.Direction()
 
     lines = db_state_r.readlines()
@@ -91,16 +91,16 @@ def main():
 
     # mapping_mode = mapping.Mapping(finish_callback)
 
-    mqtt_adapter.subscribe(topic, on_message)
-    mqtt_adapter.subscribe(sub_scenario_topic, callback_for_senario)
-    mqtt_adapter.subscribe(sub_direction_topic, callback_for_direction)
-    mqtt_adapter.subscribe(sub_qr_topic, callback_for_qr)
-    mqtt_adapter.subscribe(sub_corner_topic, callback_for_corner)
-    mqtt_adapter.subscribe(sub_obstacle_topic, callback_for_obstacle)
+   # mqtt_adapter.subscribe(topic, on_message)
+   # mqtt_adapter.subscribe(sub_scenario_topic, callback_for_senario)
+   ## mqtt_adapter.subscribe(sub_direction_topic, callback_for_direction)
+    #mqtt_adapter.subscribe(sub_qr_topic, callback_for_qr)
+    #mqtt_adapter.subscribe(sub_corner_topic, callback_for_corner)
+    #mqtt_adapter.subscribe(sub_obstacle_topic, callback_for_obstacle)
 
 
     process_state(state)
-    mqtt_adapter.loop_forever()
+   # mqtt_adapter.loop_forever()
 
 
 def on_message(client, userdata, msg):
@@ -111,7 +111,7 @@ def on_message(client, userdata, msg):
 def finish_callback():
     global state
     topic_stat = "stateStatus"
-    mqtt_adapter.publish(state, topic_stat)
+   # mqtt_adapter.publish(state, topic_stat)
     message = str(f"Mapping is finished. New state is {state}")
     state = INIT_STATE
     raspi_log.log_process(message)
