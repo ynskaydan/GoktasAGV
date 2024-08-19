@@ -3,7 +3,7 @@ import os
 from Helpers.path_helper import PathHelper
 from Processes import mapping, duty_mode
 from CrossCuttingConcerns import raspi_log
-from Sensors import obstacle_detection
+#from Sensors import #obstacle_detection
 from Services import direction_manager
 
 last_state = ""
@@ -21,6 +21,7 @@ INIT_STATE = "INIT_STATE"
 
 
 state = IDLE_STATE
+SELECTED_SCENARIO = 0
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
 file_path = os.path.join(os.path.dirname(dir_path),'Raspberry', 'Database', 'db_state.txt')
@@ -58,10 +59,33 @@ def callback_for_corner(client, userdata, msg):
     if state == MAPPING_STATE:
         mapping_mode.callback_for_corner(message)
 
-def callback_for_senario(client,userdata,msg):
+def callback_for_scenario(client,userdata,msg):
     message = msg.payload.decode('utf-8')
     if state == INIT_STATE:
         PathHelper.start_follow_path(message)
+
+def callback_for_scenario_decision(client,userdata,msg):
+    global dir_path;
+    file_path = os.path.join(os.path.dirname(dir_path),'Raspberry', 'Database', 'db_schenarios.txt')
+    message = msg.payload.decode('utf-8')
+    try:
+        db_scenarios = open(file_path, "r")
+        lines = db_scenarios.readlines()
+
+        for i in len(lines):
+            scenario_partition = lines[i].split(":")
+            if scenario_partition[0] == message:
+                SELECTED_SCENARIO = scenario_partition[1];
+
+    except FileNotFoundError:
+        raspi_log.log_process("There is no scenario found")
+
+
+
+
+
+
+
 
 
 
@@ -69,8 +93,8 @@ def callback_for_obstacle(client, userdata, msg):
     global mapping_mode
     if state == MAPPING_STATE:
         mapping_mode.callback_for_obstacle(msg)
-    if msg == "ENDED_OBSTACLE_FLOW":
-        obstacle_detection.callback_for_end_obstacle()
+    #if msg == "ENDED_OBSTACLE_FLOW":
+        #obstacle_detection.callback_for_end_obstacle()
 
 
 def main():
@@ -92,7 +116,7 @@ def main():
     # mapping_mode = mapping.Mapping(finish_callback)
 
    # mqtt_adapter.subscribe(topic, on_message)
-   # mqtt_adapter.subscribe(sub_scenario_topic, callback_for_senario)
+   # mqtt_adapter.subscribe(sub_scenario_topic, callback_for_scenario)
    ## mqtt_adapter.subscribe(sub_direction_topic, callback_for_direction)
     #mqtt_adapter.subscribe(sub_qr_topic, callback_for_qr)
     #mqtt_adapter.subscribe(sub_corner_topic, callback_for_corner)

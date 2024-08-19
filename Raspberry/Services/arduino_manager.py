@@ -2,7 +2,7 @@
 import lifecycle
 from Processes import mapping
 
-from CrossCuttingConcerns import raspi_log
+from CrossCuttingConcerns import raspi_log, mqtt_adapter
 
 sub_intersection_topic = "intersection"
 sub_imu_topic = "imu"
@@ -11,7 +11,7 @@ pub_auto_motion_control = "auto-motion"
 pub_load_topic = "load"
 
 def main():
-    ##mqtt_adapter.connect("ard")
+    mqtt_adapter.connect("ard")
 
 def send_arduino_to_decision(corner_type, new_direction):
     prev_direction = mapping.Mapping.get_direction()
@@ -40,10 +40,10 @@ def send_arduino_to_decision(corner_type, new_direction):
 
 
 def start_obstacle_flow(distance):
-    #mqtt_adapter.publish("obstacle", pub_auto_motion_control)
+    mqtt_adapter.publish("obstacle", pub_auto_motion_control)
 
 def turn_to_direction(direction):
-    #mqtt_adapter.publish(f"TURN TO {direction}",pub_auto_motion_control)
+    mqtt_adapter.publish(f"TURN TO {direction}",pub_auto_motion_control)
 
 def stop_autonomous_motion_of_vehicle():
     message = "STOP-AUTO-MOTION"
