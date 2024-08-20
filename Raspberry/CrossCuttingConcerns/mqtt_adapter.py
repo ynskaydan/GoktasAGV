@@ -43,7 +43,6 @@ def connect(cid):
 
 def publish(message, topic):
     now = datetime.datetime.now()
-    client = connect("rasperry")
     result = client.publish(topic, message)
     status = result[0]
     if status == 0:
