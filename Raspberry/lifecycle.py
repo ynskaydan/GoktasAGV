@@ -2,7 +2,7 @@ import os
 
 from Helpers.path_helper import PathHelper
 from Processes import mapping, duty_mode
-from CrossCuttingConcerns import raspi_log
+from CrossCuttingConcerns import raspi_log, mqtt_adapter
 #from Sensors import #obstacle_detection
 from Services import direction_manager
 
@@ -103,7 +103,7 @@ def main():
     global direction_controller
 
     raspi_log.log_process(str(f"Lifecycle started! parent id:, {os.getppid()},  self id:, {os.getpid()}"))
-    #mqtt_adapter.connect("lifecycle-main")
+    mqtt_adapter.connect("lifecycle-main")
     direction_controller = direction_manager.Direction()
 
     lines = db_state_r.readlines()

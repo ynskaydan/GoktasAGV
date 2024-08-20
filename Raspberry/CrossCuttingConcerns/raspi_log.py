@@ -1,6 +1,7 @@
 import datetime
 import os
 
+from CrossCuttingConcerns import mqtt_adapter
 
 #mqtt_adapter.connect("log")
 dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -13,5 +14,5 @@ def log_process(message):
     now = datetime.datetime.now()
     result = str(f"{now.hour}:{now.minute}:{now.second} {message}")
     print(result)
-    #mqtt_adapter.publish(result, pub_topic)
+    mqtt_adapter.publish(result, pub_topic)
     db_logs.write(str("\n" + result))

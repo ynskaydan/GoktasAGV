@@ -15,13 +15,14 @@ except FileNotFoundError:
 def connect(cid):
     global client
 
-    broker = "localhost"
+    broker = "10.32.16.208"
     port = 1883
     client_id = f'mqtt-raspberry-{cid}'
-    username = 'goktas'
-    password = '123456'
+    username = "goktas"
+    password = "12345678"
 
-    client = mqtt_client.Client(client_id)
+
+    client = mqtt_client.Client()
     client.username_pw_set(username, password)
 
     def on_connect(client, userdata, flags, rc):
@@ -42,6 +43,7 @@ def connect(cid):
 
 def publish(message, topic):
     now = datetime.datetime.now()
+    client = connect("rasperry")
     result = client.publish(topic, message)
     status = result[0]
     if status == 0:
