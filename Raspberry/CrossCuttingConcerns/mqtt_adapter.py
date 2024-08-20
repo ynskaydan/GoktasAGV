@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from paho.mqtt import client as mqtt_client
+import paho.mqtt.client as mqtt_client
 
 pub_topic = "raspi-log"
 dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -13,21 +13,20 @@ except FileNotFoundError:
 
 
 def connect(cid):
-    global client
-
-    broker = "10.32.16.208"
+    global clientx
+    broker = "localhost"
     port = 1883
-    client_id = f'mqtt-raspberry-{cid}'
-    username = "goktas"
-    password = "12345678"
+    #client_id = f'mqtt-raspberry-{cid}'
+    #sername = 'goktas'
+    #password = '123456'
 
-    client = mqtt_client.Client()
-    client.username_pw_set(username, password)
+    clientx = mqtt_client.Client("cid")
+   # client.username_pw_set(username, password)
 
     def on_connect(client, userdata, flags, rc):
         now = datetime.datetime.now()
         if rc == 0:
-            result = str(f"{now.hour}:{now.minute}:{now.second} Connected to MQTT Broker by  {client_id}")
+            result = str(f"{now.hour}:{now.minute}:{now.second} Connected to MQTT Broker by  {cid}")
             log(result)
             return True
         else:
@@ -35,14 +34,14 @@ def connect(cid):
             log(result)
             return False
 
-    client.on_connect = on_connect
-    client.connect(broker, port)
-    return client
+    clientx.on_connect = on_connect
+    clientx.connect(broker, port)
+    return clientx
 
 
-def publish(client,message, topic):
+def publish(message, topic):
     now = datetime.datetime.now()
-    result = client.publish(topic, message)
+    result = clientx.publish(topic, message)
     status = result[0]
     if status == 0:
         resultx = str(
@@ -57,7 +56,6 @@ def publish(client,message, topic):
 
 
 def subscribe(client,topic, callback):
-
     now = datetime.datetime.now()
     client.subscribe(topic)
     client.message_callback_add(topic, callback)
@@ -65,7 +63,7 @@ def subscribe(client,topic, callback):
     log(result)
 
 
-def loop_forever():
+def loop_forever(client):
     client.loop_forever()
 
 
@@ -75,5 +73,5 @@ def loop():
 
 def log(message):
     print(message)
-    publish(client,message, pub_topic)
+    publish(message, pub_topic)
     db_logs.write(str("\n" + message))

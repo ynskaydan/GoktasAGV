@@ -52,7 +52,7 @@ def get_lidar_data(ser):
                         raspi_log.log_process(result)
                         time.sleep(15)
                         if distance<stop_distance:
-                            mqtt_adapter.publish(result, topic)
+                            mqtt_adapter.publish(client,result, topic)
                             arduino_manager.start_obstacle_flow(distance)
                             set_obstacle_state(True)
                         else:

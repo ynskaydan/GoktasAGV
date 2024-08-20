@@ -1,43 +1,65 @@
 import cv2
+import datetime
+import os
+
+from CrossCuttingConcerns import raspi_log, mqtt_adapter
+
+topic = "qr"
+time_old = datetime.datetime.now()
 
 
 def main():
-    # Kamerayı başlat
-    cap = cv2.VideoCapture(0, cv2.CAP_V4L)
+    try:
+        read_qr()
+    except Exception as e:
+        raspi_log.log_process(f"There was faced with error on camera object: {e}")
 
-    # Çözünürlüğü ayarla
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 
-    # QR kodu algılayıcıyı oluştur
-    qr_code_detector = cv2.QRCodeDetector()
-
+def read_qr():
+    raspi_log.log_process(str(f"Qr started! parent id:, {os.getppid()},  self id:, {os.getpid()}"))
+    mqtt_adapter.connect("qr")
+    old_data = ""
+    # set up camera objects
+    cap = cv2.VideoCapture(0)
+    # QR code detection object
+    detector = cv2.QRCodeDetector()
     while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
+        # get the image
+        _, img = cap.read()
+        # get bounding box coords and data
+        data, bbox, _ = detector.detectAndDecode(img)
 
-        # QR kodunu tespit et ve çöz
-        data, bbox, _ = qr_code_detector.detectAndDecode(frame)
-
-        # Eğer bir QR kodu tespit edilirse
+        # if there is a bounding box, draw one, along with the data
         if bbox is not None:
-            for i in range(len(bbox)):
-                # QR kodu çevresine dikdörtgen çiz
-                cv2.line(frame, tuple(bbox[i][0]), tuple(bbox[(i + 1) % len(bbox)][0]), (0, 255, 0), 2)
-
-            # QR kodun içeriğini ekrana yazdır
+            #   for i in range(len(bbox)):
+            #      cv2.line(img, tuple(bbox[i][0]), tuple(bbox[(i+1) % len(bbox)][0]), color=(255,
+            #              0, 255), thickness=2)
+            # cv2.putText(img, data, (int(bbox[0][0][0]), int(bbox[0][0][1]) - 10), cv2.FONT_HERSHEY_SIMPLEX,
+            #          0.5, (0, 255, 0), 2)
             if data:
-                cv2.putText(frame, data, (int(bbox[0][0][0]), int(bbox[0][0][1]) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                            (0, 255, 0), 2)
+                send_qr(data, old_data)
+                old_data = data
 
-        # Görüntüyü göster
-        cv2.imshow('QR Code Scanner', frame)
-
-        # 'q' tuşuna basarak çık
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        # display the image preview
+        # cv2.imshow("code detector", img)
+        if cv2.waitKey(1) == ord("q"):
             break
-
+    # free camera object and exit
     cap.release()
     cv2.destroyAllWindows()
+    mqtt_adapter.loop()
 
+
+def send_qr(message, old_message):
+    global topic, time_old
+    global time_old
+    time_now = datetime.datetime.now().second
+    result = message
+    if old_message != message:
+        mqtt_adapter.publish(client,result, topic)
+        raspi_log.log_process(result)
+        time_old = time_now
+    else:
+        if (time_now - time_old) % 60 >= 10:
+            mqtt_adapter.publish(client,result, topic)
+            time_old = time_now

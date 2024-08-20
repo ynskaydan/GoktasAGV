@@ -1,9 +1,7 @@
 import os
-
 from Helpers.path_helper import PathHelper
 from Processes import mapping, duty_mode
-from CrossCuttingConcerns import raspi_log, mqtt_adapter
-#from Sensors import #obstacle_detection
+from CrossCuttingConcerns import mqtt_adapter, raspi_log
 from Services import direction_manager
 
 last_state = ""
@@ -19,23 +17,21 @@ MAPPING_STATE = "MAPPING_STATE"
 DUTY_STATE = "DUTY_STATE"
 INIT_STATE = "INIT_STATE"
 
-
-state = IDLE_STATE
-SELECTED_SCENARIO = 0
-
 dir_path = os.path.dirname(os.path.abspath(__file__))
-file_path = os.path.join(os.path.dirname(dir_path),'Raspberry', 'Database', 'db_state.txt')
-
+file_path = os.path.join(os.path.dirname(dir_path), 'Raspberry', 'Database', 'db_state.txt')
 try:
-    db_state = open(file_path,"a")
-    db_state_r = open(file_path,"r")
+    db_state = open(file_path, "a")
+    db_state_r = open(file_path, "r")
 except FileNotFoundError:
+    raspi_log.log_process("No state found before")
     db_state = open(file_path,"w")
+
 
 load_points = ["Q33","Q38","Q45","Q50"]
 def callback_for_qr(client, userdata, msg):
     global mapping_mode
     message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
+    print(message)
     parts = message.split(";")  # QR etiketinin standart halinde pozisyonu ayrıştırmak
     if state == DUTY_STATE:
         if parts[0] in load_points:
@@ -59,74 +55,33 @@ def callback_for_corner(client, userdata, msg):
     if state == MAPPING_STATE:
         mapping_mode.callback_for_corner(message)
 
-def callback_for_scenario(client,userdata,msg):
+def callback_for_senario(client,userdata,msg):
     message = msg.payload.decode('utf-8')
     if state == INIT_STATE:
         PathHelper.start_follow_path(message)
 
-def callback_for_scenario_decision(client,userdata,msg):
-    global dir_path;
-    file_path = os.path.join(os.path.dirname(dir_path),'Raspberry', 'Database', 'db_schenarios.txt')
-    message = msg.payload.decode('utf-8')
-    try:
-        db_scenarios = open(file_path, "r")
-        lines = db_scenarios.readlines()
 
-        for i in len(lines):
-            scenario_partition = lines[i].split(":")
-            if scenario_partition[0] == message:
-                SELECTED_SCENARIO = scenario_partition[1];
-
-    except FileNotFoundError:
-        raspi_log.log_process("There is no scenario found")
 
 def callback_for_obstacle(client, userdata, msg):
     global mapping_mode
     if state == MAPPING_STATE:
         mapping_mode.callback_for_obstacle(msg)
-    #if msg == "ENDED_OBSTACLE_FLOW":
+   # if msg == "ENDED_OBSTACLE_FLOW":
         #obstacle_detection.callback_for_end_obstacle()
-
-
-def main():
-    global mapping_mode
-    global state
-    global direction_controller
-
-    raspi_log.log_process(str(f"Lifecycle started! parent id:, {os.getppid()},  self id:, {os.getpid()}"))
-    mqtt_adapter.connect("lifecycle-main")
-    direction_controller = direction_manager.Direction()
-
-    lines = db_state_r.readlines()
-    if len(lines) > 0:
-        state = str(lines[len(lines) - 1])
-        raspi_log.log_process(state)
-    else:
-        state = IDLE_STATE  # idle
-
-    # mapping_mode = mapping.Mapping(finish_callback)
-
-   # mqtt_adapter.subscribe(topic, on_message)
-   # mqtt_adapter.subscribe(sub_scenario_topic, callback_for_scenario)
-   ## mqtt_adapter.subscribe(sub_direction_topic, callback_for_direction)
-    #mqtt_adapter.subscribe(sub_qr_topic, callback_for_qr)
-    #mqtt_adapter.subscribe(sub_corner_topic, callback_for_corner)
-    #mqtt_adapter.subscribe(sub_obstacle_topic, callback_for_obstacle)
-
-
-    process_state(state)
-   # mqtt_adapter.loop_forever()
-
 
 def on_message(client, userdata, msg):
     message = msg.payload.decode('utf-8')
+    print(message)
     process_state(message)
+
+
 
 
 def finish_callback():
     global state
+    global client
     topic_stat = "stateStatus"
-   # mqtt_adapter.publish(state, topic_stat)
+    mqtt_adapter.publish(client,state, topic_stat)
     message = str(f"Mapping is finished. New state is {state}")
     state = INIT_STATE
     raspi_log.log_process(message)
@@ -184,9 +139,42 @@ def process_state(message):
 
 
 def save_last_state():
-    global state
+    global state, db_state
     db_state.write("\n" + state)
 
 
 def get_last_state():
     return state
+
+
+def main():
+    global mapping_mode
+    global state
+    global direction_controller
+    global db_state
+
+    state = IDLE_STATE
+
+
+    raspi_log.log_process(str(f"Lifecycle started! parent id:, {os.getppid()},  self id:, {os.getpid()}"))
+    client = mqtt_adapter.connect("lifecycle")
+    direction_controller = direction_manager.Direction()
+    state = IDLE_STATE
+    lines = db_state_r.readlines()
+    if len(lines) > 0:
+        state = str(lines[len(lines) - 1])
+        raspi_log.log_process(state)
+    else:
+        state = IDLE_STATE  # idle
+
+    # mapping_mode = mapping.Mapping(finish_callback)
+
+    mqtt_adapter.subscribe(client,topic, on_message)
+    mqtt_adapter.subscribe(client,sub_scenario_topic, callback_for_senario)
+    mqtt_adapter.subscribe(client,sub_direction_topic, callback_for_direction)
+    mqtt_adapter.subscribe(client,sub_qr_topic, callback_for_qr)
+    mqtt_adapter.subscribe(client,sub_corner_topic, callback_for_corner)
+    mqtt_adapter.subscribe(client,sub_obstacle_topic, callback_for_obstacle)
+    process_state(state)
+    mqtt_adapter.loop_forever(client)
+

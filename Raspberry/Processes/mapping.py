@@ -11,6 +11,7 @@ file_path = os.path.join(os.path.dirname(dir_path), 'Database', 'db_graph.txt')
 try:
     db_graph = open(file_path,"a")
 except FileNotFoundError:
+    raspi_log.log_process("No graph history found")
     db_graph = open(file_path, "w")
 direction = ""
 isPathFollowing = False
@@ -20,10 +21,8 @@ sub_qr_topic = "qr"
 
 class Mapping:
     def __init__(self, finish_callback):
-        global client
         self.finish_callback = finish_callback
         raspi_log.log_process(str(f"Mapping started! parent id: {os.getppid()},  self id: {os.getpid()}"))
-        client = mqtt_adapter.connect("Mapping")
         self.graph_map = Graph()
         self.direction_controller = direction_manager.Direction()
         self.PathHelper = path_helper.PathHelper()
@@ -72,6 +71,7 @@ class Mapping:
         posy = corner[1]
         new_direction = corner[2]
         unvisited_directions = corner[3]
+        print("posx : " + corner[0] + " posy: " + corner[1] + " new direction: " + new_direction + " "  + unvisited_directions)
 
         check_node_exist = self.graph_map.check_node_already_exist(posx, posy)
 
@@ -152,7 +152,6 @@ class Mapping:
         return direction
     @staticmethod
     def send_graph_status(graph):
-        global client
         json_graph = convert_json(graph)
         db_graph.write(json_graph + "\n")
-        mqtt_adapter.publish(client,json_graph, pub_topic)
+        mqtt_adapter.publish(json_graph, pub_topic)

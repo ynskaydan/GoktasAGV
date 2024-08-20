@@ -10,7 +10,7 @@ def send_heartbeat():
     raspi_log.log_process(str(f"Heartbeat started! parent id: {os.getppid()},  self id: {os.getpid()}"))
     topic = "heartbeat"
     message = "heartbeat"
-    client = mqtt_adapter.connect("heartbeat")
+    mqtt_adapter.connect("heartbeat")
     while True:
         mqtt_adapter.publish(client,message,topic)
         time.sleep(5)  # 5 saniye bekleme
