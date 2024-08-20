@@ -42,6 +42,7 @@ def connect(cid):
 
 
 def publish(message, topic):
+    global client
     now = datetime.datetime.now()
     result = client.publish(topic, message)
     status = result[0]
@@ -58,6 +59,7 @@ def publish(message, topic):
 
 
 def subscribe(topic, callback):
+    global client
     now = datetime.datetime.now()
     client.subscribe(topic)
     client.message_callback_add(topic, callback)

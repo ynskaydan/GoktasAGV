@@ -1,8 +1,6 @@
 import cv2
 import numpy as np
 from pyzbar.pyzbar import decode
-import raspi
-
 from CrossCuttingConcerns import raspi_log
 
 
