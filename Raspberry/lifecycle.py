@@ -80,15 +80,6 @@ def callback_for_scenario_decision(client,userdata,msg):
     except FileNotFoundError:
         raspi_log.log_process("There is no scenario found")
 
-
-
-
-
-
-
-
-
-
 def callback_for_obstacle(client, userdata, msg):
     global mapping_mode
     if state == MAPPING_STATE:

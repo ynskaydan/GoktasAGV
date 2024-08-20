@@ -21,7 +21,6 @@ def connect(cid):
     username = "goktas"
     password = "12345678"
 
-
     client = mqtt_client.Client()
     client.username_pw_set(username, password)
 
@@ -41,8 +40,7 @@ def connect(cid):
     return client
 
 
-def publish(message, topic):
-    global client
+def publish(client,message, topic):
     now = datetime.datetime.now()
     result = client.publish(topic, message)
     status = result[0]
@@ -58,8 +56,8 @@ def publish(message, topic):
     db_logs.write(resultx)
 
 
-def subscribe(topic, callback):
-    global client
+def subscribe(client,topic, callback):
+
     now = datetime.datetime.now()
     client.subscribe(topic)
     client.message_callback_add(topic, callback)
@@ -77,5 +75,5 @@ def loop():
 
 def log(message):
     print(message)
-    publish(message, pub_topic)
+    publish(client,message, pub_topic)
     db_logs.write(str("\n" + message))

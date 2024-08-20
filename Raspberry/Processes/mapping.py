@@ -20,8 +20,10 @@ sub_qr_topic = "qr"
 
 class Mapping:
     def __init__(self, finish_callback):
+        global client
         self.finish_callback = finish_callback
         raspi_log.log_process(str(f"Mapping started! parent id: {os.getppid()},  self id: {os.getpid()}"))
+        client = mqtt_adapter.connect("Mapping")
         self.graph_map = Graph()
         self.direction_controller = direction_manager.Direction()
         self.PathHelper = path_helper.PathHelper()
@@ -150,6 +152,7 @@ class Mapping:
         return direction
     @staticmethod
     def send_graph_status(graph):
+        global client
         json_graph = convert_json(graph)
         db_graph.write(json_graph + "\n")
-        mqtt_adapter.publish(json_graph, pub_topic)
+        mqtt_adapter.publish(client,json_graph, pub_topic)
