@@ -3,25 +3,28 @@ import os
 
 import paho.mqtt.client as mqtt_client
 
+from constants import Constants
+
 pub_topic = "raspi-log"
 dir_path = os.path.dirname(os.path.abspath(__file__))
 file_path = os.path.join(os.path.dirname(dir_path), 'Database', 'db_logs.txt')
 try:
-    db_logs = open(file_path,"a")
+    db_logs = open(file_path, "a")
 except FileNotFoundError:
     db_logs = open(file_path, "w")
 
 
 def connect(cid):
     global clientx
-    broker = "localhost"
-    port = 1883
-    #client_id = f'mqtt-raspberry-{cid}'
-    #sername = 'goktas'
-    #password = '123456'
+    client_id = f'mqtt-raspberry-{cid}'
+    clientx = mqtt_client.Client()
+    if Constants.develop_mode == True:
+        broker = "localhost"
+    else:
+        broker = Constants.ip_addr
+        clientx.username_pw_set(Constants.mqtt_username, Constants.mqtt_password)
 
-    clientx = mqtt_client.Client("cid")
-   # client.username_pw_set(username, password)
+    port = 1883
 
     def on_connect(client, userdata, flags, rc):
         now = datetime.datetime.now()
@@ -55,7 +58,7 @@ def publish(message, topic):
     db_logs.write(resultx)
 
 
-def subscribe(client,topic, callback):
+def subscribe(client, topic, callback):
     now = datetime.datetime.now()
     client.subscribe(topic)
     client.message_callback_add(topic, callback)
@@ -68,7 +71,7 @@ def loop_forever(client):
 
 
 def loop():
-    client.loop()
+    clientx.loop()
 
 
 def log(message):

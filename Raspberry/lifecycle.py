@@ -106,7 +106,6 @@ def run_duty_mode():
     global state
     if state == INIT_STATE:
         state = DUTY_STATE
-
         # import_load.start()
         raspi_log.log_process("Duty Active")
         save_last_state()
