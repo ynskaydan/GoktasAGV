@@ -56,11 +56,13 @@ class Mapping:
     def callback_for_qr(self, msg):
         message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
         parts = message.split(";")  # QR etiketinin standart halinde pozisyonu ayrıştırmak
+
         result_add_qr = self.graph_map.add_qr(parts[0], parts[1], parts[2])
-        if result_add_qr == 0:
-            mqtt_adapter.publish("QR is already in list", sub_qr_topic)
-        else:
+        print(result_add_qr)
+        if result_add_qr != False:
             self.send_graph_status(self.graph_map)
+        else:
+            mqtt_adapter.publish("QR is already discovered and added to list", sub_qr_topic)
 
     def callback_for_corner(self, msg):
         global new_direction, direction
@@ -71,7 +73,7 @@ class Mapping:
         posy = corner[1]
         new_direction = corner[2]
         unvisited_directions = corner[3]
-        print("posx : " + corner[0] + " posy: " + corner[1] + " new direction: " + new_direction + " "  + unvisited_directions)
+        print("posx : " + str(corner[0]) + " posy: " + str(corner[1]) + " new direction: " + new_direction + " "  + str(unvisited_directions))
 
         check_node_exist = self.graph_map.check_node_already_exist(posx, posy)
 

@@ -29,18 +29,15 @@ except FileNotFoundError:
 
 load_points = ["Q33","Q38","Q45","Q50"]
 def callback_for_qr(client, userdata, msg):
-    global mapping_mode
     message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
     print(message)
     parts = message.split(";")  # QR etiketinin standart halinde pozisyonu ayrıştırmak
+    if state == MAPPING_STATE:
+        mapping_mode.callback_for_qr(msg)
     if state == DUTY_STATE:
         if parts[0] in load_points:
             duty_mode.Duty.stop_in_point()
             duty_mode.Duty.import_load()
-
-
-    if state == MAPPING_STATE:
-        mapping_mode.callback_for_qr(msg)
 
 def callback_for_direction(client,userdata,msg):
     global mapping_mode
@@ -63,7 +60,7 @@ def callback_for_senario(client,userdata,msg):
 
 
 def callback_for_obstacle(client, userdata, msg):
-    global mapping_mode
+
     if state == MAPPING_STATE:
         mapping_mode.callback_for_obstacle(msg)
    # if msg == "ENDED_OBSTACLE_FLOW":

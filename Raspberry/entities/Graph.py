@@ -83,17 +83,20 @@ class Graph:
                 break
         return node_exists
 
-    def add_qr(self, qr_id, pos_x, pos_y):
-        self.num_of_qr += 1
+    def is_qr_exist(self, qr_id, pos_x, pos_y):
         if qr_id not in self.qr_list:
+            raspi_log.log_process(str(f"QR {qr_id} has already in list"))
+            return True
+        return False
+
+
+    def add_qr(self, qr_id, pos_x, pos_y):
             new_qr = QR(qr_id, pos_x, pos_y)
             self.qr_list[qr_id] = new_qr
             message = str(f"New QR at ({pos_x},{pos_y}) is added to map! ")
             raspi_log.log_process(message)
+            self.num_of_qr += 1
             return new_qr
-        else:
-            raspi_log.log_process(str(f"QR {qr_id} has already in list"))
-            return 0
 
     def add_obstacle(self, pos_x, pos_y):
         for obstacle in self.obstacles:
