@@ -50,7 +50,7 @@ def main():
 
 def send_qr(message, old_message):
     global topic, time_old
-    time_now = datetime.now()
+    time_now = datetime.datetime.now()
     result = message
 
     if old_message != message:
