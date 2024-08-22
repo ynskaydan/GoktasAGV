@@ -21,10 +21,11 @@ class Mapper extends StatefulWidget {
 
 class _MapperState extends State<Mapper> {
   final client = UniversalMqttClient(
+    
     //broker: Uri.parse('ws://192.168.1.101:8080'),
     broker: Uri.parse('ws://192.168.1.101:8080'),
-    /*  password: "123456",
-    username: "goktas", */
+    password: "12345678",
+    username: "goktas", 
     autoReconnect: true,
   );
 

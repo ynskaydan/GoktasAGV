@@ -56,13 +56,12 @@ class Mapping:
     def callback_for_qr(self, msg):
         message = msg.payload.decode('utf-8')  # dinlenen veriyi anlamlı hale getirmek
         parts = message.split(";")  # QR etiketinin standart halinde pozisyonu ayrıştırmak
-
-        result_add_qr = self.graph_map.add_qr(parts[0], parts[1], parts[2])
-        print(result_add_qr)
-        if result_add_qr != False:
-            self.send_graph_status(self.graph_map)
-        else:
+        isQrExist = self.graph_map.is_qr_exist(parts[0],parts[1],parts[2])
+        if isQrExist:
             mqtt_adapter.publish("QR is already discovered and added to list", sub_qr_topic)
+        else:
+            result_add_qr = self.graph_map.add_qr(parts[0], parts[1], parts[2])
+
 
     def callback_for_corner(self, msg):
         global new_direction, direction
